@@ -1,0 +1,20 @@
+# Credentials
+.env
+src/config.py
+
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+
+# Data
+data/*.pdf
+*.csv
+
+# IDE
+.vscode/
+.DS_Store
+
+# Snowflake
+*sfconfig*
