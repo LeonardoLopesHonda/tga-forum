@@ -1,4 +1,5 @@
 from fastapi import FastAPI # type: ignore
+from sqlmodel import Field, Session, SQLModel, create_engine, select # type: ignore
 
 app = FastAPI()
 
@@ -30,7 +31,7 @@ def delete_user(access_token: str):
 
 @app.get("/users")
 def get_users(access_token: str):
-    return {[
+    return [
         {
             "username": "user1",
             "email": "user1.mail@gmail.com",
@@ -38,7 +39,7 @@ def get_users(access_token: str):
             "username": "user2",
             "email": "user2.mail@gmail.com",
         }
-    ]}
+    ]
 
 @app.get("/users/{user_id}")
 def get_user(access_token: str):
@@ -48,7 +49,7 @@ def get_user(access_token: str):
     }
 
 @app.get("/users/{user_id}/posts")
-def get_user(access_token: str):
+def get_user_posts(access_token: str):
     return {
         "username": "user1",
         "posts": [
@@ -58,7 +59,7 @@ def get_user(access_token: str):
     }
 
 @app.get("/users/{user_id}/comments")
-def get_user(access_token: str):
+def get_user_comments(access_token: str):
     return {
         "username": "user1",
         "comments": [
@@ -87,12 +88,12 @@ def update_post(access_token: str, title: str, content: str):
     }
 
 @app.delete("/posts/{post_id}")
-def delete_post(access_token: str, post_id: id):
+def delete_post(access_token: str, post_id: int):
     return {"message": "Post deleted"}
 
 @app.get("/posts")
 def get_posts(access_token: str):
-    return {[
+    return [
         {
             "user_id": 1,
             "post_id": "post1",
@@ -104,7 +105,7 @@ def get_posts(access_token: str):
             "title": "Post2 title",
             "content": "Post2 content",
         }
-    ]}
+    ]
 
 @app.get("/posts/{post_id}")
 def get_post(access_token: str):
@@ -147,12 +148,12 @@ def update_comment(access_token: str, comment_id: int, title: str, content: str)
     }
 
 @app.delete("/posts/comments/{comment_id}")
-def delete_comment(access_token: str, comment_id: id):
+def delete_comment(access_token: str, comment_id: int):
     return {"message": "Comment deleted"}
 
 @app.get("/posts/comments/{post_id}")
 def get_comments(access_token: str, comment_id: int):
-    return {[ 
+    return [ 
         {
             "comment_id": 1,
             "parent_id": None,
@@ -167,7 +168,7 @@ def get_comments(access_token: str, comment_id: int):
             "user_id": 1,
             "content": "Reply's content",
         },
-    ]}
+    ]
 
 @app.get("/posts/comments/{comment_id}")
 def get_comment(access_token: str, comment_id: int, title: str, content: str):
@@ -180,8 +181,8 @@ def get_comment(access_token: str, comment_id: int, title: str, content: str):
     }
 
 @app.get("/posts/comments/{comment_id}/ancestors")
-def get_comment(access_token: str, comment_id: int, title: str, content: str):
-    return {[ 
+def get_comment_ancestors(access_token: str, comment_id: int, title: str, content: str):
+    return [ 
         {
             "comment_id": 1,
             "parent_id": None,
@@ -189,11 +190,11 @@ def get_comment(access_token: str, comment_id: int, title: str, content: str):
             "user_id": 1,
             "content": "Comments's content",
         }
-    ]}
+    ]
 
 @app.get("/posts/comments/{comment_id}/breadcrumb")
-def get_comment(access_token: str, comment_id: int, title: str, content: str):
-    return {[ 
+def get_comment_breadcrumb(access_token: str, comment_id: int, title: str, content: str):
+    return [ 
         {
             "comment_id": 2,
             "parent_id": 1,
@@ -201,4 +202,4 @@ def get_comment(access_token: str, comment_id: int, title: str, content: str):
             "user_id": 1,
             "content": "Reply's content",
         },
-    ]}
+    ]
