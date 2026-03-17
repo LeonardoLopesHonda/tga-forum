@@ -2,9 +2,11 @@ from fastapi import FastAPI, Header
 from pydantic import BaseModel
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
-class User(BaseModel):
-    username: str | None = None
-    email: str
+class User(SQLModel, table=True):
+    user_id: int | None = Field(default=None, primary_key=True)
+    username: str | None = Field(default=None, index=True)
+    email: str = Field(index=True)
+    password: str | None = Field(default=None, index=True)
 
 app = FastAPI()
 
