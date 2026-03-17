@@ -1,7 +1,6 @@
-import email
 from fastapi import FastAPI, Header
 from pydantic import BaseModel
-# from sqlmodel import Field, Session, SQLModel, create_engine, select
+from sqlmodel import Field, Session, SQLModel, create_engine, select
 
 class User(BaseModel):
     username: str | None = None
