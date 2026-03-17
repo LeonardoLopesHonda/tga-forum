@@ -1,4 +1,4 @@
-from fastapi import FastAPI # type: ignore
+from fastapi import FastAPI, Header # type: ignore
 from sqlmodel import Field, Session, SQLModel, create_engine, select # type: ignore
 
 app = FastAPI()
@@ -18,7 +18,7 @@ def create_user(username: str, email: str, password: str):
     }
 
 @app.put("/users/{user_id}")
-def update_user(access_token: str, username: str, email: str, password: str):
+def update_user(username: str, email: str, password: str, access_token: str = Header()):
     return { 
         "user_id": 1,
         "username": "user1",
@@ -26,11 +26,11 @@ def update_user(access_token: str, username: str, email: str, password: str):
     }
 
 @app.delete("/users/{user_id}")
-def delete_user(access_token: str):
+def delete_user(access_token: str = Header()):
     return {"message": "User deleted"}
 
 @app.get("/users")
-def get_users(access_token: str):
+def get_users(access_token: str = Header()):
     return [
         {
             "username": "user1",
@@ -42,14 +42,14 @@ def get_users(access_token: str):
     ]
 
 @app.get("/users/{user_id}")
-def get_user(access_token: str):
+def get_user(access_token: str = Header()):
     return {
         "username": "user1",
         "email": "user1.mail@gmail.com",
     }
 
 @app.get("/users/{user_id}/posts")
-def get_user_posts(access_token: str):
+def get_user_posts(access_token: str = Header()):
     return {
         "username": "user1",
         "posts": [
@@ -59,7 +59,7 @@ def get_user_posts(access_token: str):
     }
 
 @app.get("/users/{user_id}/comments")
-def get_user_comments(access_token: str):
+def get_user_comments(access_token: str = Header()):
     return {
         "username": "user1",
         "comments": [
@@ -70,7 +70,7 @@ def get_user_comments(access_token: str):
 
 # POSTS
 @app.post("/posts")
-def create_post(access_token: str, title: str, content: str):
+def create_post(title: str, content: str, access_token: str = Header()):
     return { 
         "post_id": 1,
         "user_id": 1,
@@ -79,7 +79,7 @@ def create_post(access_token: str, title: str, content: str):
     }
 
 @app.put("/posts/{post_id}")
-def update_post(access_token: str, title: str, content: str):
+def update_post(title: str, content: str, access_token: str = Header()):
     return { 
         "post_id": 1,
         "user_id": 1,
@@ -88,11 +88,11 @@ def update_post(access_token: str, title: str, content: str):
     }
 
 @app.delete("/posts/{post_id}")
-def delete_post(access_token: str, post_id: int):
+def delete_post(post_id: int, access_token: str = Header()):
     return {"message": "Post deleted"}
 
 @app.get("/posts")
-def get_posts(access_token: str):
+def get_posts(access_token: str = Header()):
     return [
         {
             "user_id": 1,
@@ -108,7 +108,7 @@ def get_posts(access_token: str):
     ]
 
 @app.get("/posts/{post_id}")
-def get_post(access_token: str):
+def get_post(access_token: str = Header()):
     return {
         "user_id": 2,
         "post_id": "post2",
@@ -117,8 +117,8 @@ def get_post(access_token: str):
     }
 
 # Comments
-@app.post("/posts/comments/{post_id}")
-def create_comment(access_token: str, post_id: int, content: str, parent_id: int | None = None):
+@app.post("/posts/{post_id}/comments")
+def create_comment(post_id: int, content: str, parent_id: int | None = None, access_token: str = Header()):
     return { 
         "comment_id": 1,
         "parent_id": None,
@@ -128,7 +128,7 @@ def create_comment(access_token: str, post_id: int, content: str, parent_id: int
     }
 
 @app.post("/posts/replies/{parentComment_id}")
-def create_reply(access_token: str, parent_id: int, post_id: int, user_id: int, title: str, content: str):
+def create_reply(parent_id: int, post_id: int, user_id: int, title: str, content: str, access_token: str = Header()):
     return { 
         "comment_id": 2,
         "parent_id": 1,
@@ -138,7 +138,7 @@ def create_reply(access_token: str, parent_id: int, post_id: int, user_id: int, 
     }
 
 @app.put("/posts/comments/{comment_id}")
-def update_comment(access_token: str, comment_id: int, title: str, content: str):
+def update_comment(comment_id: int, title: str, content: str, access_token: str = Header()):
     return { 
         "comment_id": 1,
         "parent_id": None,
@@ -148,11 +148,11 @@ def update_comment(access_token: str, comment_id: int, title: str, content: str)
     }
 
 @app.delete("/posts/comments/{comment_id}")
-def delete_comment(access_token: str, comment_id: int):
+def delete_comment(comment_id: int, access_token: str = Header()):
     return {"message": "Comment deleted"}
 
-@app.get("/posts/comments/{post_id}")
-def get_comments(access_token: str, comment_id: int):
+@app.get("/posts/{post_id}/comments")
+def get_comments(post_id: int, access_token: str = Header()):
     return [ 
         {
             "comment_id": 1,
@@ -171,7 +171,7 @@ def get_comments(access_token: str, comment_id: int):
     ]
 
 @app.get("/posts/comments/{comment_id}")
-def get_comment(access_token: str, comment_id: int, title: str, content: str):
+def get_comment(comment_id: int, title: str, content: str, access_token: str = Header()):
     return { 
         "comment_id": 1,
         "parent_id": None,
@@ -181,7 +181,7 @@ def get_comment(access_token: str, comment_id: int, title: str, content: str):
     }
 
 @app.get("/posts/comments/{comment_id}/ancestors")
-def get_comment_ancestors(access_token: str, comment_id: int, title: str, content: str):
+def get_comment_ancestors(comment_id: int, title: str, content: str, access_token: str = Header()):
     return [ 
         {
             "comment_id": 1,
@@ -193,7 +193,7 @@ def get_comment_ancestors(access_token: str, comment_id: int, title: str, conten
     ]
 
 @app.get("/posts/comments/{comment_id}/breadcrumb")
-def get_comment_breadcrumb(access_token: str, comment_id: int, title: str, content: str):
+def get_comment_breadcrumb(comment_id: int, title: str, content: str, access_token: str = Header()):
     return [ 
         {
             "comment_id": 2,
