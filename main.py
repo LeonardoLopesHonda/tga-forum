@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Header # type: ignore
-from sqlmodel import Field, Session, SQLModel, create_engine, select # type: ignore
+from fastapi import FastAPI, Header
+from sqlmodel import Field, Session, SQLModel, create_engine, select
 
 app = FastAPI()
 
@@ -171,7 +171,7 @@ def get_comments(post_id: int, access_token: str = Header()):
     ]
 
 @app.get("/posts/comments/{comment_id}")
-def get_comment(comment_id: int, title: str, content: str, access_token: str = Header()):
+def get_comment(comment_id: int, access_token: str = Header()):
     return { 
         "comment_id": 1,
         "parent_id": None,
@@ -181,7 +181,7 @@ def get_comment(comment_id: int, title: str, content: str, access_token: str = H
     }
 
 @app.get("/posts/comments/{comment_id}/ancestors")
-def get_comment_ancestors(comment_id: int, title: str, content: str, access_token: str = Header()):
+def get_comment_ancestors(comment_id: int, access_token: str = Header()):
     return [ 
         {
             "comment_id": 1,
@@ -193,7 +193,7 @@ def get_comment_ancestors(comment_id: int, title: str, content: str, access_toke
     ]
 
 @app.get("/posts/comments/{comment_id}/breadcrumb")
-def get_comment_breadcrumb(comment_id: int, title: str, content: str, access_token: str = Header()):
+def get_comment_breadcrumb(comment_id: int, access_token: str = Header()):
     return [ 
         {
             "comment_id": 2,
