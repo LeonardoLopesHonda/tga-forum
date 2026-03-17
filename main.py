@@ -1,28 +1,32 @@
+import email
 from fastapi import FastAPI, Header
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from pydantic import BaseModel
+# from sqlmodel import Field, Session, SQLModel, create_engine, select
+
+class User(BaseModel):
+    username: str | None = None
+    email: str
 
 app = FastAPI()
 
 # AUTH
 @app.post("/auth")
-def create_session(email: str, password: str):
+def create_session(user: User, password: str):
     return {"access_token": "mock_token_123"}
 
 # USERS
 @app.post("/users")
-def create_user(username: str, email: str, password: str):
+def create_user(user: User, password: str):
+    # TODO: Generate user_id after sending req to db
     return { 
         "user_id": 1,
-        "username": "user1",
-        "email": "user1.mail@gmail.com",
+        **user.model_dump()
     }
 
 @app.put("/users/{user_id}")
-def update_user(username: str, email: str, password: str, access_token: str = Header()):
+def update_user(user: User, user_id: int, password: str, access_token: str = Header()):
     return { 
-        "user_id": 1,
-        "username": "user1",
-        "email": "user1.mail@gmail.com",
+        **user.model_dump()
     }
 
 @app.delete("/users/{user_id}")
