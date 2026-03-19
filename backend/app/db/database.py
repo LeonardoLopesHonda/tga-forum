@@ -1,7 +1,8 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column, sessionmaker
-from sqlalchemy import ForeignKey
+from sqlalchemy import DateTime, ForeignKey, func
 from sqlalchemy import create_engine
 from typing import List
+import datetime
 
 engine = create_engine("postgresql+psycopg2://postgres:postgres123@localhost:5432/tga-forum", echo=True)
 session = sessionmaker(bind=engine)
@@ -16,6 +17,8 @@ class User(Base):
     username: Mapped[str] = mapped_column(nullable=False)
     email: Mapped[str] = mapped_column(nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now())
 
     posts: Mapped[List["Post"]] = relationship(back_populates="user")
     comments: Mapped[List["Comment"]] = relationship(back_populates="user")
@@ -26,6 +29,8 @@ class Post(Base):
     post_id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(nullable=False)
     content: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now())
 
     user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"))
     user: Mapped["User"] = relationship(back_populates="posts")
@@ -36,6 +41,8 @@ class Comment(Base):
 
     comment_id: Mapped[int] = mapped_column(primary_key=True)
     content: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now())
 
     parent_id: Mapped[int | None] = mapped_column(ForeignKey("comment.comment_id"), nullable=True)
     children: Mapped[List["Comment"]] = relationship(back_populates="parent")
