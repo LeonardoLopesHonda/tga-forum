@@ -1,15 +1,14 @@
-from fastapi import FastAPI, Header
-from pydantic import BaseModel
-from sqlmodel import Field, Session, SQLModel, create_engine, select
-
-class User(SQLModel, table=True):
-    user_id: int | None = Field(default=None, primary_key=True)
-    username: str | None = Field(default=None, index=True)
-    email: str = Field(index=True)
-    password: str | None = Field(default=None, index=True)
+from fastapi import FastAPI, Header, Depends
+from db.database import create_tables
 
 app = FastAPI()
+create_tables()
 
+@app.get("/")
+def root():
+    return { "message": "hello world" }
+
+'''
 # AUTH
 @app.post("/auth")
 def create_session(user: User, password: str):
@@ -208,3 +207,4 @@ def get_comment_breadcrumb(comment_id: int, access_token: str = Header()):
             "content": "Reply's content",
         },
     ]
+'''

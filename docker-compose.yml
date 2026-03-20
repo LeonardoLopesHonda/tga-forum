@@ -1,9 +1,12 @@
 services:
   backend:
+    container_name: "forum-backend"
     build: ./backend
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
     ports:
       - "8000:8000"
-    
+  postgres:
+    container_name: "forum-backend"
+    image: postgres
