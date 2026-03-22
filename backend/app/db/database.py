@@ -1,10 +1,11 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column, sessionmaker
 from sqlalchemy import DateTime, ForeignKey, func
+from app.core.config import settings
 from sqlalchemy import create_engine
 from typing import List
 import datetime
 
-engine = create_engine("postgresql+psycopg2://postgres:postgres123@localhost:5432/tga-forum", echo=True)
+engine = create_engine(settings.DATABASE_URL, echo=True)
 session = sessionmaker(bind=engine)
 
 class Base(DeclarativeBase):
