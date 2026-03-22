@@ -1,6 +1,6 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column, sessionmaker
 from sqlalchemy import DateTime, ForeignKey, func
-from app.core.config import settings
+from core.config import settings
 from sqlalchemy import create_engine
 from typing import List
 import datetime
