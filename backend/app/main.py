@@ -1,28 +1,16 @@
-from fastapi import FastAPI, Header, Depends
+from fastapi import FastAPI
 from db.database import create_tables
+from api.routes.auth import router as auth_router
+from api.routes.user import router as user_router
 
 app = FastAPI()
 create_tables()
 
-@app.get("/")
-def root():
-    return { "message": "hello world" }
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(user_router, prefix="/api/v1")
 
 '''
-# AUTH
-@app.post("/auth")
-def create_session(user: User, password: str):
-    return {"access_token": "mock_token_123"}
-
 # USERS
-@app.post("/users")
-def create_user(user: User, password: str):
-    # TODO: Generate user_id after sending req to db
-    return { 
-        "user_id": 1,
-        **user.model_dump()
-    }
-
 @app.put("/users/{user_id}")
 def update_user(user: User, user_id: int, password: str, access_token: str = Header()):
     return { 
