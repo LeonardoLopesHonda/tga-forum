@@ -3,6 +3,7 @@ from db.database import create_tables
 from api.routes.auth import router as auth_router
 from api.routes.user import router as user_router
 from api.routes.post import router as post_router
+from api.routes.comment import router as comment_router
 
 app = FastAPI()
 create_tables()
@@ -10,6 +11,7 @@ create_tables()
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(user_router, prefix="/api/v1")
 app.include_router(post_router, prefix="/api/v1")
+app.include_router(comment_router, prefix="/api/v1")
 
 '''
 # USERS
