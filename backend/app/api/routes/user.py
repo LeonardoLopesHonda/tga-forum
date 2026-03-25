@@ -1,8 +1,8 @@
 from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.models.post import PostPublic
-from app.services.post import get_posts_by_user
+from models.post import PostPublic
+from services.post import get_posts_by_user
 from services.auth import get_current_user
 from models.token import TokenData
 from models.user import UserCreate, UserPublic, UserUpdate
