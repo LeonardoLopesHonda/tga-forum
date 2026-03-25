@@ -1,6 +1,8 @@
 from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from models.comment import CommentPublic
+from services.comment import get_comments_by_user
 from models.post import PostPublic
 from services.post import get_posts_by_user
 from services.auth import get_current_user
@@ -53,4 +55,9 @@ def get(user_id: int, current_user: TokenData = Depends(get_current_user), db:Se
         raise HTTPException(status_code=403, detail="Forbidden")
     return posts
 
-# TODO: Implement /users/{user_id}/comments
+@router.get("/user/{user_id}/comments", response_model=list[CommentPublic])
+def get(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> list[CommentPublic]:
+    comments = get_comments_by_user(db, user_id)
+    if user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return comments
