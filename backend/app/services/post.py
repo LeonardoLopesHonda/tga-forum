@@ -16,6 +16,13 @@ def get_post_by_id(db: Session, post_id: int):
         return None
     return post
 
+def get_posts_by_user(db: Session, user_id: int):
+    posts = db.query(Post).filter(Post.user_id == user_id).all()
+
+    if not posts:
+        return None
+    return posts
+
 def create_post(db: Session, body: PostCreate, user_id: int):
     post = Post(
         title = body.title,

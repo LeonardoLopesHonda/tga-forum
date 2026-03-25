@@ -1,6 +1,8 @@
 from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from app.models.post import PostPublic
+from app.services.post import get_posts_by_user
 from services.auth import get_current_user
 from models.token import TokenData
 from models.user import UserCreate, UserPublic, UserUpdate
@@ -44,5 +46,11 @@ def get_all(user_id: int, current_user: TokenData = Depends(get_current_user), d
         raise HTTPException(status_code=403, detail="Forbidden")
     return get_all_users(db)
 
-# TODO: Implement /users/{user_id}/posts
+@router.get("/user/{user_id}/posts", response_model=list[PostPublic])
+def get(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> list[PostPublic]:
+    posts = get_posts_by_user(db, user_id)
+    if user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return posts
+
 # TODO: Implement /users/{user_id}/comments
