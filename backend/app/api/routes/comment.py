@@ -5,7 +5,7 @@ from models.token import TokenData
 from services.auth import get_current_user
 from db.database import get_db
 from models.comment import CommentPublic, CommentCreate, CommentUpdate
-from services.comment import create_comment, delete_comment, get_comments_by_post, get_comment_by_id, update_comment
+from services.comment import create_comment, delete_comment, get_comments_by_post, get_comment_by_id, update_comment, list_comment_ancestors
 
 router = APIRouter()
 
@@ -52,5 +52,16 @@ def get(post_id: int, db:Session = Depends(get_db)) -> CommentPublic:
         raise HTTPException(status_code=404, detail="Comments not found")
     return comments
 
-# TODO: Implement /posts/comments/{comment_id}/ancestors
-# TODO: Implement /posts/comments/{comment_id}/breadcrumb
+@router.get("/posts/comments/{comment_id}/ancestors", response_model=list[CommentPublic])
+def get_ancestors(comment_id: int, db: Session = Depends(get_db)) -> list[CommentPublic]:
+    comment = get_comment_by_id(db, comment_id)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return list_comment_ancestors(db, comment)
+
+@router.get("/posts/comments/{comment_id}/breadcrumb", response_model=[CommentPublic])
+def get_breadcrumb(comment_id: int, db: Session = Depends(get_db)) -> list[CommentPublic]:
+    comment = get_comment_by_id(db, comment_id)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return [*list_comment_ancestors(db, comment), comment]

@@ -47,3 +47,20 @@ def update_comment(db: Session, body: CommentUpdate, comment: Comment):
     db.commit()
     db.refresh(comment)
     return comment
+
+def list_comment_ancestors(db: Session, comment: Comment) -> list[Comment]:
+    """Parent chain from immediate parent up to root, ordered root-first."""
+    ancestors_rev: list[Comment] = []
+    seen: set[int] = set()
+    pid = comment.parent_id
+    while pid is not None:
+        if pid in seen:
+            break
+        seen.add(pid)
+        parent = get_comment_by_id(db, pid)
+        if parent is None:
+            break
+        ancestors_rev.append(parent)
+        pid = parent.parent_id
+    ancestors_rev.reverse()
+    return ancestors_rev
