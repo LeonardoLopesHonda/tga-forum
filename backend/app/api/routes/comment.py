@@ -45,8 +45,8 @@ def delete(comment_id: int, current_user: TokenData = Depends(get_current_user),
     delete_comment(db, comment)
     return { "message": "Comment deleted" }
 
-@router.get("/posts/{post_id}/comments", response_model=CommentPublic)
-def get(post_id: int, db:Session = Depends(get_db)) -> CommentPublic:
+@router.get("/posts/{post_id}/comments", response_model=list[CommentPublic])
+def get(post_id: int, db:Session = Depends(get_db)) -> list[CommentPublic]:
     comments = get_comments_by_post(db, post_id)
     if comments is None:
         raise HTTPException(status_code=404, detail="Comments not found")
@@ -59,7 +59,7 @@ def get_ancestors(comment_id: int, db: Session = Depends(get_db)) -> list[Commen
         raise HTTPException(status_code=404, detail="Comment not found")
     return list_comment_ancestors(db, comment)
 
-@router.get("/posts/comments/{comment_id}/breadcrumb", response_model=[CommentPublic])
+@router.get("/posts/comments/{comment_id}/breadcrumb", response_model=list[CommentPublic])
 def get_breadcrumb(comment_id: int, db: Session = Depends(get_db)) -> list[CommentPublic]:
     comment = get_comment_by_id(db, comment_id)
     if comment is None:
