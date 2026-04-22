@@ -7,7 +7,7 @@ def get_all_users(db: Session):
     users = db.query(User).all()
 
     if not users:
-        return None
+        return []
     return users
 
 def get_user_by_id(db: Session, user_id: int):

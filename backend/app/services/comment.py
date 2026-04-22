@@ -6,7 +6,7 @@ def get_comments_by_post(db: Session, post_id: int):
     comments = db.query(Comment).filter(Comment.post_id == post_id).all()
 
     if not comments:
-        return None
+        return []
     return comments
 
 def get_comment_by_id(db: Session, comment_id: int):
@@ -20,7 +20,7 @@ def get_comments_by_user(db: Session, user_id: int):
     comments = db.query(Comment).filter(Comment.user_id == user_id).all()
 
     if not comments:
-        return None
+        return []
     return comments
 
 def create_comment(db: Session, body: CommentCreate, post_id: int, user_id: int, parent_id: int | None = None):

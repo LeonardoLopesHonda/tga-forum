@@ -6,7 +6,7 @@ def get_all_posts(db: Session):
     posts = db.query(Post).all()
 
     if not posts:
-        return None
+        return []
     return posts
 
 def get_post_by_id(db: Session, post_id: int):
@@ -20,7 +20,7 @@ def get_posts_by_user(db: Session, user_id: int):
     posts = db.query(Post).filter(Post.user_id == user_id).all()
 
     if not posts:
-        return None
+        return []
     return posts
 
 def create_post(db: Session, body: PostCreate, user_id: int):
