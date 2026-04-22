@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models.user import UserUpdate
+from models.user import UserCreate, UserUpdate
 from db.database import User
 from services.auth import hash_password
 
@@ -24,7 +24,7 @@ def get_user_by_email(db: Session, email: str):
         return None
     return user
 
-def create_user(db: Session, body: User):
+def create_user(db: Session, body: UserCreate):
     user = User(
         email = body.email,
         username = body.username,
