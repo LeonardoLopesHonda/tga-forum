@@ -37,7 +37,7 @@ def delete(user_id: int, current_user: TokenData = Depends(get_current_user), db
     return { "message": "User Deleted" }
 
 @router.get("/user/{user_id}", response_model=UserPublic)
-def get(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> UserPublic:
+def get_user(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> UserPublic:
     if user_id != current_user.user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
     return get_user_by_email(db, current_user.email)
@@ -49,14 +49,14 @@ def get_all(user_id: int, current_user: TokenData = Depends(get_current_user), d
     return get_all_users(db)
 
 @router.get("/user/{user_id}/posts", response_model=list[PostPublic])
-def get(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> list[PostPublic]:
+def get_user_posts(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> list[PostPublic]:
     posts = get_posts_by_user(db, user_id)
     if user_id != current_user.user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
     return posts
 
 @router.get("/user/{user_id}/comments", response_model=list[CommentPublic])
-def get(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> list[CommentPublic]:
+def get_user_comments(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> list[CommentPublic]:
     comments = get_comments_by_user(db, user_id)
     if user_id != current_user.user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
