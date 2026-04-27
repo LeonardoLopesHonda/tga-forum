@@ -1,26 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Ovo&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── Backgrounds ── */
+  --void:    #05040A;
+  --depth-1: #0D0B12;
+  --depth-2: #131020;
+  --depth-3: #1C1930;
+
+  /* ── Gold accent ── */
+  --gold:       #D4A843;
+  --gold-light: #EDD07A;
+
+  /* ── Text ── */
+  --cream:   #F5EDD8;
+  --cream-2: #A09070;
+  --cream-3: #7A6A50;
+  --cream-4: #5A4A3A;
+
+  /* ── Typography ── */
+  --font-display: 'Ovo', Georgia, serif;
+  --font-body:    'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* ── Easing ── */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--void);
+  color: var(--cream);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
