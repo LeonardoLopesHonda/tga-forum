@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from models.user import UserCreate, UserUpdate
 from db.database import User
@@ -25,6 +26,10 @@ def get_user_by_email(db: Session, email: str):
     return user
 
 def create_user(db: Session, body: UserCreate):
+    user = db.query(User).filter(User.email == body.email).first()
+    if user is not None:
+        return None
+
     user = User(
         email = body.email,
         username = body.username,

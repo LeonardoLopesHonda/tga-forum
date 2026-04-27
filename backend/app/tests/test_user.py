@@ -30,7 +30,7 @@ def setup_db():
     Base.metadata.drop_all(bind=engine)
     app.dependency_overrides.clear()
 
-def test_create_a_user():
+def test_create_user():
     response = client.post("/api/v1/user", json={
         "username": "test",
         "email": "test@gmail.com",
@@ -41,7 +41,7 @@ def test_create_a_user():
     assert data["username"] == "test"
     assert data["email"] == "test@gmail.com"
 
-def test_update_a_user():
+def test_update_user():
     response = client.post("/api/v1/user", json={
         "username": "authorized_update",
         "email": "authorized_update@gmail.com",
@@ -70,7 +70,7 @@ def test_update_a_user():
     assert data["username"] == "updated_user"
     assert data["email"] == "updated_email@gmail.com"
 
-def test_delete_a_user():
+def test_delete_user():
     response = client.post("/api/v1/user", json={
         "username": "delete_user",
         "email": "delete_user@gmail.com",
@@ -92,6 +92,17 @@ def test_delete_a_user():
     data = response.json()
     assert data["message"] == "User Deleted"
 
-# TODO: Write a test for the same email
-# TODO: Write a test for wrong email
-# TODO: Write a test for wrong password
+def test_reject_same_email():
+    response = client.post("/api/v1/user", json={
+        "username": "test",
+        "email": "test@gmail.com",
+        "password": "12345678",
+    })
+    assert response.status_code == 200, response.text
+
+    response = client.post("/api/v1/user", json={
+        "username": "test2",
+        "email": "test@gmail.com",
+        "password": "12345678",
+    })
+    assert response.status_code == 409, response.text

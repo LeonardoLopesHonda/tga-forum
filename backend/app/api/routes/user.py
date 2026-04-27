@@ -15,10 +15,10 @@ router = APIRouter()
 
 @router.post("/user", response_model=UserPublic)
 def create(body: UserCreate, db: Session = Depends(get_db)) -> UserPublic:
-    try:
-        return create_user(db, body)
-    except IntegrityError:
+    user = create_user(db, body)
+    if user is None:
         raise HTTPException(status_code=409, detail="User already exists")
+    return user
 
 @router.put("/user/{user_id}", response_model=UserPublic)
 def update(user_id: int, body: UserUpdate, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> UserPublic:
