@@ -82,3 +82,31 @@ def test_user_unauthorized_request():
 
     response = client.get(f"/api/v1/user/{user["user_id"]}")
     assert response.status_code == 401, response.text
+
+def test_reject_wrong_email():
+    response = client.post("/api/v1/user", json={
+        "username": "user",
+        "email": "user@gmail.com",
+        "password": "12345678",
+    })
+    assert response.status_code == 200, response.text
+
+    response = client.post("/api/v1/auth", data={
+        "username": "wrong@gmail.com",
+        "password": "12345678",
+    })
+    assert response.status_code == 401, response.text
+
+def test_reject_wrong_password():
+    response = client.post("/api/v1/user", json={
+        "username": "user",
+        "email": "user@gmail.com",
+        "password": "12345678",
+    })
+    assert response.status_code == 200, response.text
+
+    response = client.post("/api/v1/auth", data={
+        "username": "user@gmail.com",
+        "password": "87654321",
+    })
+    assert response.status_code == 401, response.text
