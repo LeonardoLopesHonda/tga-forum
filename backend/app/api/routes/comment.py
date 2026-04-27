@@ -26,7 +26,7 @@ def reply(parentComment_id: int, body: CommentCreate, current_user: TokenData = 
     except IntegrityError:
         raise HTTPException(status_code=404, detail="Post/User not found")
 
-@router.put("/posts/comments/{comment_id}", response_model=CommentPublic)
+@router.put("/comments/{comment_id}", response_model=CommentPublic)
 def update(comment_id: int, body: CommentUpdate, current_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)) -> CommentPublic:
     comment = get_comment_by_id(db, comment_id)
     if comment is None:
@@ -35,7 +35,7 @@ def update(comment_id: int, body: CommentUpdate, current_user: TokenData = Depen
         raise HTTPException(status_code=403, detail="Forbidden")
     return update_comment(db, body, comment)
 
-@router.delete("/posts/comments/{comment_id}")
+@router.delete("/comments/{comment_id}")
 def delete(comment_id: int, current_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)):
     comment = get_comment_by_id(db, comment_id)
     if comment is None:
@@ -52,14 +52,14 @@ def get(post_id: int, db:Session = Depends(get_db)) -> list[CommentPublic]:
         raise HTTPException(status_code=404, detail="Comments not found")
     return comments
 
-@router.get("/posts/comments/{comment_id}/ancestors", response_model=list[CommentPublic])
+@router.get("/comments/{comment_id}/ancestors", response_model=list[CommentPublic])
 def get_ancestors(comment_id: int, db: Session = Depends(get_db)) -> list[CommentPublic]:
     comment = get_comment_by_id(db, comment_id)
     if comment is None:
         raise HTTPException(status_code=404, detail="Comment not found")
     return list_comment_ancestors(db, comment)
 
-@router.get("/posts/comments/{comment_id}/breadcrumb", response_model=list[CommentPublic])
+@router.get("/comments/{comment_id}/breadcrumb", response_model=list[CommentPublic])
 def get_breadcrumb(comment_id: int, db: Session = Depends(get_db)) -> list[CommentPublic]:
     comment = get_comment_by_id(db, comment_id)
     if comment is None:
