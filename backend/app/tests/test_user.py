@@ -91,3 +91,7 @@ def test_delete_a_user():
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["message"] == "User Deleted"
+
+# TODO: Write a test for the same email
+# TODO: Write a test for wrong email
+# TODO: Write a test for wrong password
