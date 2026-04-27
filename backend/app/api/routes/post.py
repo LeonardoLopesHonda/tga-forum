@@ -40,7 +40,7 @@ def get_all(db:Session = Depends(get_db)) -> list[PostPublic]:
     return get_all_posts(db)
 
 @router.get("/posts/{post_id}", response_model=PostPublic)
-def get(post_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> PostPublic:
+def get(post_id: int, db:Session = Depends(get_db)) -> PostPublic:
     post = get_post_by_id(db, post_id)
     if post is None:
         raise HTTPException(status_code=404, detail="Post not found")
