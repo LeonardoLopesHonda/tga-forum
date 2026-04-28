@@ -72,3 +72,7 @@ export async function replyToComment(commentId: number, content: string): Promis
   return req<CommentPublic>('POST', `/comments/${commentId}/replies`, { content });
 }
 export async function deleteComment(id: number) { return req('DELETE', `/comments/${id}`); }
+
+export async function getUser(userId: number): Promise<UserPublic> {
+  return req<UserPublic>('GET', `/user/${userId}`);
+}

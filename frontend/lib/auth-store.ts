@@ -43,17 +43,23 @@ const store = {
   async login(email: string, password: string): Promise<AuthUser> {
     const data = await api.login(email, password);
     store.token = data.access_token;
+    let user: AuthUser;
     try {
       const payload = JSON.parse(atob(data.access_token.split('.')[1]));
-      const user: AuthUser = { user_id: payload.user_id, email: payload.email, username: payload.email.split('@')[0] };
-      store.user = user;
-      saveUser(user);
+      const userId: number = payload.user_id;
+      try {
+        const userPublic = await api.getUser(userId);
+        user = { user_id: userPublic.user_id, email: userPublic.email, username: userPublic.username };
+      } catch (_) {
+        user = { user_id: userId, email: payload.email ?? email, username: (payload.email ?? email).split('@')[0] };
+      }
     } catch (_) {
-      store.user = { user_id: 0, email, username: email.split('@')[0] };
-      saveUser(store.user);
+      user = { user_id: 0, email, username: email.split('@')[0] };
     }
+    store.user = user;
+    saveUser(store.user);
     notify();
-    return store.user!;
+    return store.user;
   },
 
   async register(username: string, email: string, password: string): Promise<AuthUser> {
