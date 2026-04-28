@@ -2,8 +2,8 @@ const BASE_URL = 'http://localhost:8000/api/v1';
 const TOKEN_KEY = 'tga_access_token';
 
 export type UserPublic    = { user_id: number; username: string; email: string };
-export type PostPublic    = { post_id: number; title: string; content: string; user_id: number; created_at: string };
-export type CommentPublic = { comment_id: number; content: string; post_id: number; user_id: number; parent_id: number | null; created_at: string };
+export type PostPublic    = { post_id: number; title: string; content: string; user_id: number; created_at?: string };
+export type CommentPublic = { comment_id: number; content: string; post_id: number; user_id: number; parent_id: number | null; created_at?: string };
 export type Token         = { access_token: string; token_type: 'bearer' };
 
 function getToken(): string | null { return localStorage.getItem(TOKEN_KEY); }
