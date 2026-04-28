@@ -49,7 +49,7 @@ function CommentNode({
   onDelete: (id: number) => void; currentUserId: number | null;
 }) {
   const [replyText, setReplyText] = useState('');
-  const user        = deriveUser(comment.user_id);
+  const user        = { ...deriveUser(comment.user_id), username: comment.username };
   const children    = allComments.filter(c => c.parent_id === comment.comment_id);
   const isReplying  = replyingTo === comment.comment_id;
   const isOwn       = currentUserId != null && currentUserId === comment.user_id;
@@ -163,7 +163,7 @@ function CommentSection({ postId, onAuthOpen, currentUser }: { postId: number; o
       setComments(prev => [...prev, {
         comment_id: nextId.current++, post_id: postId,
         user_id: currentUser?.user_id || 1, parent_id: null, content: newComment.trim(),
-        created_at: new Date().toISOString(),
+        username: currentUser?.username || '', created_at: new Date().toISOString(),
       }]);
     } finally { setNewComment(''); setSubmitting(false); }
   };
@@ -177,7 +177,7 @@ function CommentSection({ postId, onAuthOpen, currentUser }: { postId: number; o
       setComments(prev => [...prev, {
         comment_id: nextId.current++, post_id: postId,
         user_id: currentUser?.user_id || 1, parent_id: parentId, content: content.trim(),
-        created_at: new Date().toISOString(),
+        username: currentUser?.username || '', created_at: new Date().toISOString(),
       }]);
     }
     setReplyingTo(null);
@@ -275,7 +275,7 @@ export default function PostDetailClient({ postId }: { postId: number }) {
     return () => { cancelled = true; };
   }, [postId]);
 
-  const author      = post ? deriveUser(post.user_id) : null;
+  const author      = post ? { ...deriveUser(post.user_id), username: post.username } : null;
   const isOwn       = auth.user && post && auth.user.user_id === post.user_id;
 
   if (loading) return (

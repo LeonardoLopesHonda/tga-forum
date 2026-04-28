@@ -11,7 +11,7 @@ type Props = { post: PostPublic & { tag?: string; time?: string }; commentCount?
 export default function PostCard({ post, commentCount }: Props) {
   const [hovered, setHovered] = useState(false);
   const router = useRouter();
-  const user = deriveUser(post.user_id);
+  const user = { ...deriveUser(post.user_id), username: post.username };
 
   return (
     <article
