@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException
 from models.token import TokenData
 from core.config import settings
@@ -22,7 +22,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def sign_token(data: dict) -> str:
     payload = data.copy()
-    payload["exp"] = datetime.now() + timedelta(hours=24)
+    payload["exp"] = datetime.now(timezone.utc) + timedelta(hours=24)
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 def verify_token(token: str) -> TokenData:

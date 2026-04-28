@@ -94,11 +94,11 @@ def test_loads_all_comments():
     user = setup_user().json()
     access_token = user["access_token"]
     post = setup_post("post1", "amazing post", access_token).json()
-    setup_comment("comment1", post["user_id"], access_token)
-    setup_comment("comment2", post["user_id"], access_token)
-    setup_comment("comment3", post["user_id"], access_token)
+    setup_comment("comment1", post["post_id"], access_token)
+    setup_comment("comment2", post["post_id"], access_token)
+    setup_comment("comment3", post["post_id"], access_token)
 
-    response = client.get(f"/api/v1/posts/{post["user_id"]}/comments")
+    response = client.get(f"/api/v1/posts/{post["post_id"]}/comments")
     assert response.status_code == 200, response.text
 
     data = response.json()
@@ -109,7 +109,7 @@ def test_create_a_reply():
     user = setup_user().json()
     access_token = user["access_token"]
     post = setup_post("post1", "amazing post", access_token).json()
-    parent = setup_comment("comment1", post["user_id"], access_token).json()
+    parent = setup_comment("comment1", post["post_id"], access_token).json()
 
     response = client.post(f"/api/v1/comments/{parent["comment_id"]}/replies", 
         headers={"Authorization": f"Bearer {access_token}"}, 
@@ -129,7 +129,7 @@ def test_loads_comment_ancestors():
     user = setup_user().json()
     access_token = user["access_token"]
     post = setup_post("post1", "amazing post", access_token).json()
-    root_parent = setup_comment("comment1", post["user_id"], access_token).json()
+    root_parent = setup_comment("comment1", post["post_id"], access_token).json()
     parent = setup_reply("reply1", root_parent["comment_id"], access_token).json()
     child = setup_reply("reply2", parent["comment_id"], access_token).json()
 
@@ -146,7 +146,7 @@ def test_loads_comment_breadcrumb():
     user = setup_user().json()
     access_token = user["access_token"]
     post = setup_post("post1", "amazing post", access_token).json()
-    root_parent = setup_comment("comment1", post["user_id"], access_token).json()
+    root_parent = setup_comment("comment1", post["post_id"], access_token).json()
     parent = setup_reply("reply1", root_parent["comment_id"], access_token).json()
     child = setup_reply("reply2", parent["comment_id"], access_token).json()
 
@@ -167,7 +167,7 @@ def test_user_edits_a_comment():
     user = setup_user().json()
     access_token = user["access_token"]
     post = setup_post("post1", "amazing post", access_token).json()
-    comment = setup_comment("comment1", post["user_id"], access_token).json()
+    comment = setup_comment("comment1", post["post_id"], access_token).json()
 
     response = client.put(f"/api/v1/comments/{comment["comment_id"]}", 
         headers={"Authorization": f"Bearer {access_token}"}, 
@@ -185,7 +185,7 @@ def test_user_deletes_a_comment():
     user = setup_user().json()
     access_token = user["access_token"]
     post = setup_post("post1", "amazing post", access_token).json()
-    comment = setup_comment("comment1", post["user_id"], access_token).json()
+    comment = setup_comment("comment1", post["post_id"], access_token).json()
 
     response = client.delete(f"/api/v1/comments/{comment["comment_id"]}", 
         headers={"Authorization": f"Bearer {access_token}"})
