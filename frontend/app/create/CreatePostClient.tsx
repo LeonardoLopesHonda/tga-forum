@@ -97,6 +97,7 @@ export default function CreatePostClient() {
     if (!canSubmit) return;
     setError(''); setSubmitting(true);
     try {
+      // tag is UI-only — backend has no tag field yet
       await api.createPost(title.trim(), content.trim());
       setDone(true);
     } catch (e: unknown) {
