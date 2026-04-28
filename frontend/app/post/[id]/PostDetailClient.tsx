@@ -163,6 +163,7 @@ function CommentSection({ postId, onAuthOpen, currentUser }: { postId: number; o
       setComments(prev => [...prev, {
         comment_id: nextId.current++, post_id: postId,
         user_id: currentUser?.user_id || 1, parent_id: null, content: newComment.trim(),
+        created_at: new Date().toISOString(),
       }]);
     } finally { setNewComment(''); setSubmitting(false); }
   };
@@ -176,6 +177,7 @@ function CommentSection({ postId, onAuthOpen, currentUser }: { postId: number; o
       setComments(prev => [...prev, {
         comment_id: nextId.current++, post_id: postId,
         user_id: currentUser?.user_id || 1, parent_id: parentId, content: content.trim(),
+        created_at: new Date().toISOString(),
       }]);
     }
     setReplyingTo(null);
