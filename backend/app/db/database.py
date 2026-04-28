@@ -1,3 +1,4 @@
+from enum import unique
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column, sessionmaker
 from sqlalchemy import DateTime, ForeignKey, func
 from core.config import settings
@@ -16,7 +17,7 @@ class User(Base):
 
     user_id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(nullable=False)
-    email: Mapped[str] = mapped_column(nullable=False)
+    email: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
