@@ -1,5 +1,5 @@
-from pydantic import BaseModel, ConfigDict, model_validator
-from typing import Any
+from uuid import UUID
+from pydantic import BaseModel, ConfigDict
 
 class CommentBase(BaseModel):
     content: str
@@ -14,13 +14,5 @@ class CommentPublic(CommentBase):
     comment_id: int
     parent_id: int | None = None
     post_id: int
-    user_id: int
-    username: str
+    user_id: UUID
     model_config = ConfigDict(from_attributes=True)
-
-    @model_validator(mode='before')
-    @classmethod
-    def extract_username(cls, obj: Any) -> Any:
-        if hasattr(obj, 'user') and obj.user is not None:
-            obj.__dict__['username'] = obj.user.username
-        return obj
