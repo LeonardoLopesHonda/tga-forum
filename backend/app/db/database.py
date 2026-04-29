@@ -22,7 +22,7 @@ class Post(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("auth.users.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
     comments: Mapped[List["Comment"]] = relationship(back_populates="post")
 
 class Comment(Base):
@@ -38,7 +38,7 @@ class Comment(Base):
     parent: Mapped["Comment | None"] = relationship(back_populates="children", remote_side="Comment.comment_id")
     post_id: Mapped[int] = mapped_column(ForeignKey("post.post_id"))
     post: Mapped["Post"] = relationship(back_populates="comments")
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("auth.users.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
 
 def create_tables():
     Base.metadata.create_all(engine)

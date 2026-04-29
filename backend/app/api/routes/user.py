@@ -1,4 +1,3 @@
-from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models.comment import CommentPublic
@@ -7,55 +6,18 @@ from models.post import PostPublic
 from services.post import get_posts_by_user
 from services.auth import get_current_user
 from models.token import TokenData
-from models.user import UserCreate, UserPublic, UserUpdate
 from db.database import get_db
-from services.user import create_user, delete_user, get_all_users, get_user_by_email, update_user
 
 router = APIRouter()
 
-@router.post("/user", response_model=UserPublic)
-def create(body: UserCreate, db: Session = Depends(get_db)) -> UserPublic:
-    user = create_user(db, body)
-    if user is None:
-        raise HTTPException(status_code=409, detail="User already exists")
-    return user
-
-@router.put("/user/{user_id}", response_model=UserPublic)
-def update(user_id: int, body: UserUpdate, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> UserPublic:
-    if user_id != current_user.user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    user = update_user(db, current_user.user_id, body)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
-
-@router.delete("/user/{user_id}")
-def delete(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)):
-    if user_id != current_user.user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    delete_user(db, current_user.user_id)
-    return { "message": "User Deleted" }
-
-@router.get("/user/{user_id}", response_model=UserPublic)
-def get_user(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> UserPublic:
-    if user_id != current_user.user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    return get_user_by_email(db, current_user.email)
-
-@router.get("/users", response_model=list[UserPublic])
-def get_all(db:Session = Depends(get_db)) -> UserPublic:
-    return get_all_users(db)
-
 @router.get("/user/{user_id}/posts", response_model=list[PostPublic])
-def get_user_posts(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> list[PostPublic]:
-    if user_id != current_user.user_id:
+def get_user_posts(user_id: str, current_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)):
+    if str(current_user.user_id) != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
-    posts = get_posts_by_user(db, user_id)
-    return posts
+    return get_posts_by_user(db, current_user.user_id)
 
 @router.get("/user/{user_id}/comments", response_model=list[CommentPublic])
-def get_user_comments(user_id: int, current_user: TokenData = Depends(get_current_user), db:Session = Depends(get_db)) -> list[CommentPublic]:
-    if user_id != current_user.user_id:
+def get_user_comments(user_id: str, current_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)):
+    if str(current_user.user_id) != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
-    comments = get_comments_by_user(db, user_id)
-    return comments
+    return get_comments_by_user(db, current_user.user_id)
