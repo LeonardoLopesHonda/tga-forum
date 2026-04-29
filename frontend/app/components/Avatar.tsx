@@ -5,10 +5,17 @@ const PALETTE: [string, string][] = [
   ['#131020', '#B8912E'], ['#252240', '#D4A843'], ['#5C420C', '#F7E7B4'],
 ];
 
-export function deriveUser(userId: number) {
-  const idx = Math.abs(Math.trunc(userId) || 0) % PALETTE.length;
+function hashId(id: string | number): number {
+  const s = String(id);
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+export function deriveUser(userId: string | number) {
+  const idx = hashId(userId) % PALETTE.length;
   const [c1, c2] = PALETTE[idx];
-  return { initials: `U${userId}`, color: [c1, c2] as [string, string], username: `user_${userId}` };
+  return { color: [c1, c2] as [string, string] };
 }
 
 type AvatarUser = { initials?: string; color?: [string, string]; username?: string };
@@ -26,7 +33,7 @@ export default function Avatar({ user, size = 28 }: { user: AvatarUser | null; s
         fontFamily: 'var(--font-body)',
       }}
     >
-      {user.initials || (user.username || '?').slice(0, 2).toUpperCase()}
+      {user.initials || (user.username ? user.username.slice(0, 2).toUpperCase() : '?')}
     </div>
   );
 }

@@ -147,7 +147,7 @@ export default function Header({ onAuthOpen }: Props) {
             {auth.user ? (
               <button onClick={() => authStore.logout()} title={`Signed in as ${auth.user.username || auth.user.email} — click to sign out`}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Avatar user={deriveUser(auth.user.user_id || 0)} size={30} />
+                <Avatar user={{ ...deriveUser(auth.user.user_id), username: auth.user.username || auth.user.email }} size={30} />
                 <span style={{ fontSize: 13, color: 'var(--cream-2)' }}>{auth.user.username || auth.user.email}</span>
               </button>
             ) : (

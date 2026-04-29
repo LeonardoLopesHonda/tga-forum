@@ -1,9 +1,9 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 const TOKEN_KEY = 'tga_access_token';
 
-export type UserPublic    = { user_id: number; username: string; email: string };
-export type PostPublic    = { post_id: number; title: string; content: string; user_id: number; username: string; created_at?: string };
-export type CommentPublic = { comment_id: number; content: string; post_id: number; user_id: number; username: string; parent_id: number | null; created_at?: string };
+export type UserPublic    = { user_id: string; username: string; email: string };
+export type PostPublic    = { post_id: string; title: string; content: string; user_id: string; username: string; created_at?: string };
+export type CommentPublic = { comment_id: string; content: string; post_id: string; user_id: string; username: string; parent_id: string | null; created_at?: string };
 export type Token         = { access_token: string; token_type: 'bearer' };
 
 function getToken(): string | null { return localStorage.getItem(TOKEN_KEY); }
@@ -54,25 +54,25 @@ export function isLoggedIn() { return !!getToken(); }
 export { getToken, storeToken, removeToken };
 
 export async function getPosts(): Promise<PostPublic[]>      { return req<PostPublic[]>('GET', '/posts'); }
-export async function getPost(id: number): Promise<PostPublic> { return req<PostPublic>('GET', `/posts/${id}`); }
+export async function getPost(id: string): Promise<PostPublic> { return req<PostPublic>('GET', `/posts/${id}`); }
 export async function createPost(title: string, content: string): Promise<PostPublic> {
   return req<PostPublic>('POST', '/posts', { title, content });
 }
-export async function deletePost(id: number) { return req('DELETE', `/posts/${id}`); }
+export async function deletePost(id: string) { return req('DELETE', `/posts/${id}`); }
 
-export async function getComments(postId: number): Promise<CommentPublic[]> {
+export async function getComments(postId: string): Promise<CommentPublic[]> {
   return req<CommentPublic[]>('GET', `/posts/${postId}/comments`);
 }
-export async function createComment(postId: number, content: string, parentId?: number | null): Promise<CommentPublic> {
+export async function createComment(postId: string, content: string, parentId?: string | null): Promise<CommentPublic> {
   const body: Record<string, unknown> = { content };
   if (parentId != null) body.parent_id = parentId;
   return req<CommentPublic>('POST', `/posts/${postId}/comments`, body);
 }
-export async function replyToComment(commentId: number, content: string): Promise<CommentPublic> {
+export async function replyToComment(commentId: string, content: string): Promise<CommentPublic> {
   return req<CommentPublic>('POST', `/comments/${commentId}/replies`, { content });
 }
-export async function deleteComment(id: number) { return req('DELETE', `/comments/${id}`); }
+export async function deleteComment(id: string) { return req('DELETE', `/comments/${id}`); }
 
-export async function getUser(userId: number): Promise<UserPublic> {
+export async function getUser(userId: string): Promise<UserPublic> {
   return req<UserPublic>('GET', `/user/${userId}`);
 }

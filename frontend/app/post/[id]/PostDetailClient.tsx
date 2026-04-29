@@ -44,14 +44,14 @@ function CommentNode({
   comment, depth, allComments, onReply, replyingTo, onSubmitReply, onDelete, currentUserId,
 }: {
   comment: CommentPublic; depth: number; allComments: CommentPublic[];
-  onReply: (id: number | null) => void; replyingTo: number | null;
-  onSubmitReply: (parentId: number, content: string) => void;
-  onDelete: (id: number) => void; currentUserId: number | null;
+  onReply: (id: string | null) => void; replyingTo: string | null;
+  onSubmitReply: (parentId: string, content: string) => void;
+  onDelete: (id: string) => void; currentUserId: string | null;
 }) {
   const [replyText, setReplyText] = useState('');
   const user        = { ...deriveUser(comment.user_id), username: comment.username };
   const children    = allComments.filter(c => c.parent_id === comment.comment_id);
-  const isReplying  = replyingTo === comment.comment_id;
+  const isReplying  = replyingTo != null && replyingTo === comment.comment_id;
   const isOwn       = currentUserId != null && currentUserId === comment.user_id;
   const indentPx    = Math.min(depth, 4) * 22;
 
@@ -136,13 +136,14 @@ function CommentNode({
   );
 }
 
-function CommentSection({ postId, onAuthOpen, currentUser }: { postId: number; onAuthOpen: () => void; currentUser: AuthUser | null }) {
+function CommentSection({ postId, onAuthOpen, currentUser }: { postId: string; onAuthOpen: () => void; currentUser: AuthUser | null }) {
   const [comments, setComments]     = useState<CommentPublic[]>([]);
   const [loading, setLoading]       = useState(true);
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const nextId = useRef(9000);
+  const nextOptimisticId = () => `optimistic-${nextId.current++}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -161,29 +162,29 @@ function CommentSection({ postId, onAuthOpen, currentUser }: { postId: number; o
       setComments(prev => [...prev, c]);
     } catch (_) {
       setComments(prev => [...prev, {
-        comment_id: nextId.current++, post_id: postId,
-        user_id: currentUser?.user_id || 1, parent_id: null, content: newComment.trim(),
+        comment_id: nextOptimisticId(), post_id: postId,
+        user_id: currentUser?.user_id || '', parent_id: null, content: newComment.trim(),
         username: currentUser?.username || '', created_at: new Date().toISOString(),
       }]);
     } finally { setNewComment(''); setSubmitting(false); }
   };
 
-  const handleSubmitReply = async (parentId: number, content: string) => {
+  const handleSubmitReply = async (parentId: string, content: string) => {
     if (!content.trim()) return;
     try {
       const c = await api.replyToComment(parentId, content.trim());
       setComments(prev => [...prev, c]);
     } catch (_) {
       setComments(prev => [...prev, {
-        comment_id: nextId.current++, post_id: postId,
-        user_id: currentUser?.user_id || 1, parent_id: parentId, content: content.trim(),
+        comment_id: nextOptimisticId(), post_id: postId,
+        user_id: currentUser?.user_id || '', parent_id: parentId, content: content.trim(),
         username: currentUser?.username || '', created_at: new Date().toISOString(),
       }]);
     }
     setReplyingTo(null);
   };
 
-  const handleDelete = async (commentId: number) => {
+  const handleDelete = async (commentId: string) => {
     try { await api.deleteComment(commentId); } catch (_) { /* noop */ }
     setComments(prev => prev.filter(c => c.comment_id !== commentId));
   };
@@ -249,7 +250,7 @@ function CommentSection({ postId, onAuthOpen, currentUser }: { postId: number; o
   );
 }
 
-export default function PostDetailClient({ postId }: { postId: number }) {
+export default function PostDetailClient({ postId }: { postId: string }) {
   const [post, setPost]       = useState<PostPublic | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');

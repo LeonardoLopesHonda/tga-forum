@@ -4,7 +4,7 @@ import * as api from './api';
 
 const STORE_KEY = 'tga_user';
 
-export type AuthUser = { user_id: number; username: string; email: string };
+export type AuthUser = { user_id: string; username: string; email: string };
 
 type Listener = (user: AuthUser | null, token: string | null) => void;
 
@@ -46,7 +46,7 @@ const store = {
     let user: AuthUser;
     try {
       const payload = JSON.parse(atob(data.access_token.split('.')[1]));
-      const userId: number = payload.user_id;
+      const userId: string = String(payload.user_id);
       try {
         const userPublic = await api.getUser(userId);
         user = { user_id: userPublic.user_id, email: userPublic.email, username: userPublic.username };
@@ -54,7 +54,7 @@ const store = {
         user = { user_id: userId, email: payload.email ?? email, username: (payload.email ?? email).split('@')[0] };
       }
     } catch (_) {
-      user = { user_id: 0, email, username: email.split('@')[0] };
+      user = { user_id: '', email, username: email.split('@')[0] };
     }
     store.user = user;
     saveUser(store.user);
