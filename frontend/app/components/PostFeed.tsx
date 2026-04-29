@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import * as api from '@/lib/api';
 import type { PostPublic } from '@/lib/api';
+import toast from '@/lib/toast';
 import PostCard from './PostCard';
 import Shimmer from './Shimmer';
 
@@ -27,7 +28,13 @@ export default function PostFeed() {
     setLoading(true);
     api.getPosts()
       .then(data => { if (!cancelled) { setPosts(data); setLoading(false); } })
-      .catch(() => { if (!cancelled) { setPosts([]); setLoading(false); } });
+      .catch((e: unknown) => {
+        if (!cancelled) {
+          setPosts([]);
+          setLoading(false);
+          toast.error(e instanceof Error ? e.message : 'Could not load posts. The server may be waking up — try again in a moment.');
+        }
+      });
     return () => { cancelled = true; };
   }, []);
 

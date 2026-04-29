@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Header from './Header';
 import AuthModal from './AuthModal';
 import Footer from './Footer';
+import Toaster from './Toaster';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [authOpen, setAuthOpen] = useState(false);
@@ -14,6 +15,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <main>{children}</main>
       <Footer />
+      <Toaster />
     </>
   );
 }

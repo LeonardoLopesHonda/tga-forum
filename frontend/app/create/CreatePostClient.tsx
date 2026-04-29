@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as api from '@/lib/api';
 import authStore, { type AuthUser } from '@/lib/auth-store';
+import toast from '@/lib/toast';
 import AuthModal from '@/app/components/AuthModal';
 
 const TAGS = ['Engineering', 'Explore', 'Connect'] as const;
@@ -101,11 +102,11 @@ export default function CreatePostClient() {
       await api.createPost(title.trim(), content.trim());
       setDone(true);
     } catch (e: unknown) {
-      if (e instanceof Error && (e as Error & { status?: number }).status === 401) {
-        setError('Your session expired. Please sign in again.');
-      } else {
-        setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
-      }
+      const msg = e instanceof Error && (e as Error & { status?: number }).status === 401
+        ? 'Your session expired. Please sign in again.'
+        : (e instanceof Error ? e.message : 'Something went wrong. Try again.');
+      setError(msg);
+      toast.error(msg);
     } finally { setSubmitting(false); }
   };
 

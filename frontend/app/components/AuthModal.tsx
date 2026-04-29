@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import authStore from '@/lib/auth-store';
+import toast from '@/lib/toast';
 
 type Props = { open: boolean; onClose: () => void };
 
@@ -25,7 +26,9 @@ export default function AuthModal({ open, onClose }: Props) {
       setForm({ username: '', email: '', password: '' });
       onClose();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
+      const msg = e instanceof Error ? e.message : 'Something went wrong. Try again.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
