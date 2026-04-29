@@ -1,17 +1,6 @@
-from pydantic import BaseModel, ConfigDict
+from uuid import UUID
+from pydantic import BaseModel
 
-class UserBase(BaseModel):
-    username: str
+class UserPublic(BaseModel):
+    user_id: UUID
     email: str
-
-class UserCreate(UserBase):
-    password: str
-
-class UserUpdate(BaseModel):
-    username: str | None = None
-    email: str | None = None
-    password: str | None = None
-
-class UserPublic(UserBase):
-    user_id: int
-    model_config = ConfigDict(from_attributes=True)
