@@ -46,13 +46,11 @@ const store = {
     let user: AuthUser;
     try {
       const payload = JSON.parse(atob(data.access_token.split('.')[1]));
-      const userId: string = String(payload.user_id);
-      try {
-        const userPublic = await api.getUser(userId);
-        user = { user_id: userPublic.user_id, email: userPublic.email, username: userPublic.username };
-      } catch (_) {
-        user = { user_id: userId, email: payload.email ?? email, username: (payload.email ?? email).split('@')[0] };
-      }
+      const userId: string = payload.sub;
+      const storedUser = loadUser();
+      const username = (storedUser?.user_id === userId ? storedUser.username : null)
+        ?? (payload.email ?? email).split('@')[0];
+      user = { user_id: userId, email: payload.email ?? email, username };
     } catch (_) {
       user = { user_id: '', email, username: email.split('@')[0] };
     }
@@ -63,9 +61,16 @@ const store = {
   },
 
   async register(username: string, email: string, password: string): Promise<AuthUser> {
-    const newUser = await api.register(username, email, password);
-    await store.login(email, password);
-    store.user = { ...store.user!, username: newUser.username, user_id: newUser.user_id };
+    const data = await api.register(username, email, password);
+    store.token = data.access_token;
+    let user: AuthUser;
+    try {
+      const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+      user = { user_id: payload.sub, email: payload.email ?? email, username };
+    } catch (_) {
+      user = { user_id: '', email, username };
+    }
+    store.user = user;
     saveUser(store.user);
     notify();
     return store.user;

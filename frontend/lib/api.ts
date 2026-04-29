@@ -1,7 +1,6 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 const TOKEN_KEY = 'tga_access_token';
 
-export type UserPublic    = { user_id: string; username: string; email: string };
 export type PostPublic    = { post_id: string; title: string; content: string; user_id: string; username: string; created_at?: string };
 export type CommentPublic = { comment_id: string; content: string; post_id: string; user_id: string; username: string; parent_id: string | null; created_at?: string };
 export type Token         = { access_token: string; token_type: 'bearer' };
@@ -40,13 +39,15 @@ async function req<T>(method: string, path: string, body?: Record<string, unknow
 }
 
 export async function login(email: string, password: string): Promise<Token> {
-  const data = await req<Token>('POST', '/auth', { username: email, password }, true);
+  const data = await req<Token>('POST', '/auth/login', { username: email, password }, true);
   storeToken(data.access_token);
   return data;
 }
 
-export async function register(username: string, email: string, password: string): Promise<UserPublic> {
-  return req<UserPublic>('POST', '/user', { username, email, password });
+export async function register(username: string, email: string, password: string): Promise<Token> {
+  const data = await req<Token>('POST', '/auth/signup', { username, email, password });
+  storeToken(data.access_token);
+  return data;
 }
 
 export function logout() { removeToken(); }
@@ -73,6 +74,3 @@ export async function replyToComment(commentId: string, content: string): Promis
 }
 export async function deleteComment(id: string) { return req('DELETE', `/comments/${id}`); }
 
-export async function getUser(userId: string): Promise<UserPublic> {
-  return req<UserPublic>('GET', `/user/${userId}`);
-}
