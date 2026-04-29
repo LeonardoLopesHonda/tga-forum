@@ -17,6 +17,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# For render to load backend
+@app.get("/")
+def root():
+    return {"status": "online"}
+
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(user_router, prefix="/api/v1")
 app.include_router(post_router, prefix="/api/v1")
