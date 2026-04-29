@@ -1,19 +1,35 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from supabase_auth.errors import AuthApiError
+from core.supabase import supabase
 from models.token import Token
-from services.user import get_user_by_email
-from db.database import get_db
-from services.auth import sign_token, verify_password
+from pydantic import BaseModel
 
 router = APIRouter()
 
-@router.post("/auth", response_model=Token)
-def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = get_user_by_email(db, form.username) # OAuth2PasswordRequestForm uses `username` as the field convention
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    if not verify_password(form.password, user.password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = sign_token({ "user_id": user.user_id, "email": user.email })
-    return Token(access_token=token, token_type="bearer")
+class SignUpBody(BaseModel):
+    email: str
+    password: str
+    username: str
+
+@router.post("/auth/signup", response_model=Token)
+def signup(body: SignUpBody):
+    try:
+        response = supabase.auth.sign_up({
+            "email": body.email,
+            "password": body.password
+        })
+    except AuthApiError:
+        raise HTTPException(status_code=400, detail="Failed to signup")
+    return Token(access_token=response.session.access_token, token_type="bearer")
+
+@router.post("/auth/login", response_model=Token)
+def login(form: OAuth2PasswordRequestForm = Depends()):
+    try:
+        response = supabase.auth.sign_in_with_password({
+            "email": form.username,  # OAuth2PasswordRequestForm uses `username` as the field convention
+            "password": form.password
+        })
+    except AuthApiError:
+        raise HTTPException(status_code=400, detail="Failed to login")
+    return Token(access_token=response.session.access_token, token_type="bearer")
