@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8000/api/v1';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 const TOKEN_KEY = 'tga_access_token';
 
 export type UserPublic    = { user_id: number; username: string; email: string };
