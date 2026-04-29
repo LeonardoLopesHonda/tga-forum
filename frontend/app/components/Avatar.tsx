@@ -6,7 +6,8 @@ const PALETTE: [string, string][] = [
 ];
 
 export function deriveUser(userId: number) {
-  const [c1, c2] = PALETTE[(userId || 0) % PALETTE.length];
+  const idx = Math.abs(Math.trunc(userId) || 0) % PALETTE.length;
+  const [c1, c2] = PALETTE[idx];
   return { initials: `U${userId}`, color: [c1, c2] as [string, string], username: `user_${userId}` };
 }
 
