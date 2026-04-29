@@ -20,7 +20,9 @@ def signup(body: SignUpBody):
             "password": body.password
         })
     except AuthApiError as e:
-        raise HTTPException(status_code=400, detail=str(e))  # Supabase error passthrough
+        raise HTTPException(status_code=400, detail=str(e))
+    if response.session is None:
+        raise HTTPException(status_code=400, detail="Email confirmation required — check your inbox.")
     return Token(access_token=response.session.access_token, token_type="bearer")
 
 @router.post("/auth/login", response_model=Token)
