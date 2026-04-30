@@ -15,4 +15,5 @@ class CommentPublic(CommentBase):
     parent_id: int | None = None
     post_id: int
     user_id: UUID
+    username: str
     model_config = ConfigDict(from_attributes=True)

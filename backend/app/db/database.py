@@ -46,6 +46,31 @@ class Profile(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     username: Mapped[str] = mapped_column(String(20), nullable=False)
 
+class PostWithUsername(Base):
+    __tablename__ = "post_with_username"
+    __table_args__ = {"extend_existing": True}
+
+    post_id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(nullable=False)
+    content: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    username: Mapped[str] = mapped_column(nullable=False)
+
+class CommentWithUsername(Base):
+    __tablename__ = "comment_with_username"
+    __table_args__ = {"extend_existing": True}
+
+    comment_id: Mapped[int] = mapped_column(primary_key=True)
+    content: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+    parent_id: Mapped[int | None] = mapped_column(nullable=True)
+    post_id: Mapped[int] = mapped_column(nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    username: Mapped[str] = mapped_column(nullable=False)
+
 def create_tables():
     Base.metadata.create_all(engine)
 

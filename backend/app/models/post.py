@@ -15,4 +15,5 @@ class PostUpdate(BaseModel):
 class PostPublic(PostBase):
     post_id: int
     user_id: UUID
+    username: str
     model_config = ConfigDict(from_attributes=True)

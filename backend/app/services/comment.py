@@ -1,10 +1,10 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
 from models.comment import CommentCreate, CommentUpdate
-from db.database import Comment
+from db.database import Comment, CommentWithUsername
 
 def get_comments_by_post(db: Session, post_id: int):
-    comments = db.query(Comment).filter(Comment.post_id == post_id).all()
+    comments = db.query(CommentWithUsername).filter(CommentWithUsername.post_id == post_id).all()
     if not comments:
         return []
     return comments
@@ -16,7 +16,7 @@ def get_comment_by_id(db: Session, comment_id: int):
     return comment
 
 def get_comments_by_user(db: Session, user_id: UUID):
-    comments = db.query(Comment).filter(Comment.user_id == user_id).all()
+    comments = db.query(CommentWithUsername).filter(CommentWithUsername.user_id == user_id).all()
     if not comments:
         return []
     return comments
