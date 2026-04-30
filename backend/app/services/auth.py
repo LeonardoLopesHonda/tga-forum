@@ -23,7 +23,8 @@ def verify_token(token: str) -> TokenData:
         payload = jwt.decode(token, public_key, algorithms=[ALGORITHM], audience="authenticated")
         user_id: UUID = UUID(payload["sub"])
         email: str = payload.get("email")
-        return TokenData(user_id=user_id, email=email)
+        username: str = payload.get("user_metadata", {}).get("username", "")
+        return TokenData(user_id=user_id, email=email, username=username)
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid Token")
 

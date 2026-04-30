@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column, sessionmaker
-from sqlalchemy import DateTime, ForeignKey, func
+from sqlalchemy import DateTime, ForeignKey, func, String
 from sqlalchemy.dialects.postgresql import UUID
 from core.config import settings
 from sqlalchemy import create_engine
@@ -39,6 +39,12 @@ class Comment(Base):
     post_id: Mapped[int] = mapped_column(ForeignKey("post.post_id"))
     post: Mapped["Post"] = relationship(back_populates="comments")
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+
+class Profile(Base):
+    __tablename__ = "profiles"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    username: Mapped[str] = mapped_column(String(20), nullable=False)
 
 def create_tables():
     Base.metadata.create_all(engine)
