@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Avatar, { deriveUser } from './Avatar';
@@ -41,8 +41,8 @@ function MobileDrawer({ open, onClose, onAuthOpen, auth }: { open: boolean; onCl
       transition: 'transform 0.32s var(--ease)', pointerEvents: open ? 'all' : 'none',
     }}>
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {(['Forum', '/'] as const).map(([label, path]) => (
-          <button key={label as string} onClick={() => go(path as string)} style={{
+        {([['Forum', '/']] as const).map(([label, path]) => (
+          <button key={label} onClick={() => go(path)} style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: '14px 0',
             fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 400,
             color: 'var(--cream)', textAlign: 'left', letterSpacing: '-0.01em',
@@ -82,8 +82,10 @@ function MobileDrawer({ open, onClose, onAuthOpen, auth }: { open: boolean; onCl
 export default function Header({ onAuthOpen }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [auth, setAuth] = useState<{ user: AuthUser | null }>({ user: null });
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const router   = useRouter();
   const pathname = usePathname();
 
@@ -107,7 +109,17 @@ export default function Header({ onAuthOpen }: Props) {
     return () => window.removeEventListener('resize', fn);
   }, []);
 
-  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useEffect(() => { setMenuOpen(false); setDropdownOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   return (
     <>
@@ -145,11 +157,40 @@ export default function Header({ onAuthOpen }: Props) {
               }}>+ New post</button>
 
             {auth.user ? (
-              <button onClick={() => authStore.logout()} title={`Signed in as ${auth.user.username || auth.user.email} — click to sign out`}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Avatar user={{ ...deriveUser(auth.user.user_id), username: auth.user.username || auth.user.email }} size={30} />
-                <span style={{ fontSize: 13, color: 'var(--cream-2)' }}>{auth.user.username || auth.user.email}</span>
-              </button>
+              <div ref={dropdownRef} style={{ position: 'relative' }}>
+                <button onClick={() => setDropdownOpen(o => !o)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Avatar user={{ ...deriveUser(auth.user.user_id), username: auth.user.username || auth.user.email }} size={30} />
+                  <span style={{ fontSize: 13, color: 'var(--cream-2)' }}>{auth.user.username || auth.user.email}</span>
+                  <svg width={12} height={12} viewBox="0 0 12 12" fill="none" style={{ marginLeft: 2, opacity: 0.5, transition: 'transform 0.2s', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                    <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                {dropdownOpen && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 10px)', right: 0, minWidth: 180,
+                    background: 'rgba(14,12,24,0.98)', border: '1px solid rgba(212,168,67,0.18)',
+                    borderRadius: 8, padding: '6px 0', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                    backdropFilter: 'blur(12px)', zIndex: 200,
+                  }}>
+                    <div style={{ padding: '8px 16px 10px', borderBottom: '1px solid rgba(212,168,67,0.10)' }}>
+                      <div style={{ fontSize: 13, color: 'var(--cream)', fontWeight: 600 }}>{auth.user.username}</div>
+                      <div style={{ fontSize: 11, color: 'var(--cream-3)', marginTop: 2 }}>{auth.user.email}</div>
+                    </div>
+                    <button
+                      onClick={() => { authStore.logout(); setDropdownOpen(false); }}
+                      style={{
+                        width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+                        padding: '10px 16px', textAlign: 'left', fontSize: 13,
+                        color: 'var(--cream-2)', fontFamily: 'var(--font-body)',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(212,168,67,0.07)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'none'; }}
+                    >Sign out</button>
+                  </div>
+                )}
+              </div>
             ) : (
               <button onClick={onAuthOpen}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold-light)'; }}
