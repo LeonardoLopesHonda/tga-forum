@@ -3,10 +3,11 @@ from sqlalchemy.orm import Session
 from models.user import UserPatch
 from services.post import get_recent_posts_by_user
 from db.database import Profile
+from uuid import UUID
 
 def populate_profile(id: str, username: str, db: Session):
     profile = Profile(
-        id=id,
+        id=UUID(str(id)),
         username=username
     )
     db.add(profile)
@@ -34,4 +35,4 @@ def update_profile(user: Profile, body: UserPatch, db: Session):
         setattr(user, field, value)
     db.commit()
     db.refresh(user)
-    return user
+    return {"user_id": user.id, "username": user.username, "bio": user.bio}
