@@ -7,7 +7,9 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
     SUPABASE_JWT_SECRET: str
-    OPENAI_API_KEY: str
+    AI_PROVIDER: str = "openai"
+    OPENAI_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
 
     model_config = { "env_file": Path(__file__).resolve().parent.parent.parent / ".env" }
 
