@@ -75,6 +75,16 @@ export async function replyToComment(commentId: string, content: string): Promis
 export async function deleteComment(id: string) { return req('DELETE', `/comments/${id}`); }
 
 export type AiAssistResponse = { title: string | null; content: string | null };
+
+export type UserPublic  = { user_id: string; username: string; bio: string | null };
+export type ProfilePublic = UserPublic & { posts: PostPublic[] };
+
+export async function getProfile(username: string): Promise<ProfilePublic> {
+  return req<ProfilePublic>('GET', `/users/${username}`);
+}
+export async function updateBio(username: string, bio: string): Promise<UserPublic> {
+  return req<UserPublic>('PATCH', `/users/${username}`, { bio });
+}
 export async function aiAssistPost(title?: string, content?: string): Promise<AiAssistResponse> {
   const body: Record<string, string> = {};
   if (title)   body.title   = title;
