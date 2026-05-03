@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import * as api from '@/lib/api';
 import type { PostPublic, CommentPublic } from '@/lib/api';
 import authStore, { type AuthUser } from '@/lib/auth-store';
@@ -64,7 +65,7 @@ function CommentNode({
       <div style={{ marginBottom: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
           <Avatar user={user} size={24} />
-          <span style={{ fontSize: 13, color: 'var(--cream-2)', fontWeight: 500 }}>{user.username}</span>
+          <Link href={`/profile/${user.username}`} style={{ fontSize: 13, color: 'var(--cream-2)', fontWeight: 500, textDecoration: 'none' }}>{user.username}</Link>
           {isOwn && (
             <button onClick={() => onDelete(comment.comment_id)}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#c07070'; }}
@@ -329,7 +330,7 @@ export default function PostDetailClient({ postId }: { postId: string }) {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40, paddingBottom: 32, borderBottom: '1px solid rgba(212,168,67,0.10)' }}>
           <Avatar user={author} size={28} />
-          <span style={{ fontSize: 14, color: 'var(--cream-2)' }}>{author?.username}</span>
+          <Link href={`/profile/${author?.username}`} style={{ fontSize: 14, color: 'var(--cream-2)', textDecoration: 'none' }}>{author?.username}</Link>
         </div>
 
         <div style={{ marginBottom: 56 }}>{renderBody(post.content)}</div>

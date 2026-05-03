@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import type { PostPublic } from '@/lib/api';
 import Avatar, { deriveUser } from './Avatar';
 import TagChip from './TagChip';
@@ -47,7 +48,11 @@ export default function PostCard({ post, commentCount }: Props) {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Avatar user={user} size={22} />
-        <span style={{ fontSize: 12, color: 'var(--cream-3)' }}>{user.username}</span>
+        <Link
+          href={`/profile/${user.username}`}
+          onClick={e => e.stopPropagation()}
+          style={{ fontSize: 12, color: 'var(--cream-3)', textDecoration: 'none' }}
+        >{user.username}</Link>
         {commentCount !== undefined && (
           <span style={{ fontSize: 12, color: 'var(--cream-4)' }}>
             {commentCount} {commentCount === 1 ? 'reply' : 'replies'}
