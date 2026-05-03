@@ -21,6 +21,12 @@ def get_posts_by_user(db: Session, user_id: UUID):
         return []
     return posts
 
+def get_recent_posts_by_user(db: Session, user_id: UUID):
+    posts = db.query(PostWithUsername).filter(PostWithUsername.user_id == user_id).order_by(PostWithUsername.created_at.desc()).all()
+    if not posts:
+        return []
+    return posts
+
 def create_post(db: Session, body: PostCreate, user_id: UUID):
     post = Post(
         title=body.title,

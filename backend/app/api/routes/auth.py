@@ -2,7 +2,9 @@ from services.profile import populate_profile
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from supabase_auth.errors import AuthApiError
+from sqlalchemy.orm import Session
 from core.supabase import supabase
+from db.database import get_db
 from models.token import Token
 from pydantic import BaseModel
 
@@ -14,7 +16,7 @@ class SignUpBody(BaseModel):
     username: str
 
 @router.post("/auth/signup", response_model=Token)
-def signup(body: SignUpBody):
+def signup(body: SignUpBody, db: Session = Depends(get_db)):
     try:
         response = supabase.auth.sign_up({
             "email": body.email,
@@ -25,7 +27,7 @@ def signup(body: SignUpBody):
         raise HTTPException(status_code=400, detail=str(e))
     if response.session is None:
         raise HTTPException(status_code=400, detail="Email confirmation required — check your inbox.")
-    populate_profile(id=response.user.id, username=body.username)
+    populate_profile(id=response.user.id, username=body.username, db=db)
     return Token(access_token=response.session.access_token, token_type="bearer")
 
 @router.post("/auth/login", response_model=Token)
