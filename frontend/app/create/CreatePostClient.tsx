@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as api from '@/lib/api';
+import { aiAssistPost } from '@/lib/api';
 import authStore, { type AuthUser } from '@/lib/auth-store';
 import toast from '@/lib/toast';
 import AuthModal from '@/app/components/AuthModal';
@@ -24,6 +25,7 @@ export default function CreatePostClient() {
   const [content, setContent]   = useState('');
   const [tag, setTag]           = useState<Tag | ''>('');
   const [submitting, setSubmitting] = useState(false);
+  const [aiLoading, setAiLoading]   = useState(false);
   const [error, setError]       = useState('');
   const [done, setDone]         = useState(false);
   const router = useRouter();
@@ -93,6 +95,19 @@ export default function CreatePostClient() {
   );
 
   const canSubmit = title.trim().length >= 5 && content.trim().length >= 10 && !submitting;
+
+  const handleAiAssist = async () => {
+    if (aiLoading || (!title.trim() && !content.trim())) return;
+    setAiLoading(true);
+    try {
+      const result = await aiAssistPost(title.trim() || undefined, content.trim() || undefined);
+      if (result.title)   setTitle(result.title);
+      if (result.content) setContent(result.content);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'AI assist failed. Try again.';
+      toast.error(msg);
+    } finally { setAiLoading(false); }
+  };
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -181,7 +196,43 @@ export default function CreatePostClient() {
 
       {/* Content */}
       <div style={{ marginBottom: 32 }}>
-        <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 8, letterSpacing: '0.04em' }}>Content</label>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <label style={{ fontSize: 12, color: 'var(--cream-2)', letterSpacing: '0.04em' }}>Content</label>
+          <button
+            onClick={handleAiAssist}
+            disabled={aiLoading || (!title.trim() && !content.trim())}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'transparent',
+              border: `1px solid ${aiLoading ? 'rgba(100,120,220,0.20)' : 'rgba(100,160,255,0.30)'}`,
+              borderRadius: 5, padding: '5px 12px',
+              fontFamily: 'var(--font-body)', fontSize: 12, letterSpacing: '0.05em',
+              color: aiLoading ? 'rgba(140,160,255,0.45)' : 'rgba(160,200,255,0.80)',
+              cursor: aiLoading || (!title.trim() && !content.trim()) ? 'default' : 'pointer',
+              transition: 'all 0.18s var(--ease)',
+              opacity: (!title.trim() && !content.trim()) ? 0.4 : 1,
+            }}
+            onMouseEnter={e => {
+              if (!aiLoading && (title.trim() || content.trim())) {
+                const el = e.currentTarget as HTMLButtonElement;
+                el.style.borderColor = 'rgba(140,160,255,0.55)';
+                el.style.background = 'rgba(100,120,255,0.08)';
+              }
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLButtonElement;
+              el.style.borderColor = 'rgba(100,160,255,0.30)';
+              el.style.background = 'transparent';
+            }}
+          >
+            {/* Sparkle icon — two 4-pointed stars, blue + purple */}
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+              <path d="M9.5 1 L10.15 3.85 L13 4.5 L10.15 5.15 L9.5 8 L8.85 5.15 L6 4.5 L8.85 3.85 Z" fill="rgba(140,180,255,0.90)" />
+              <path d="M3.5 7 L3.9 8.6 L5.5 9 L3.9 9.4 L3.5 11 L3.1 9.4 L1.5 9 L3.1 8.6 Z" fill="rgba(180,130,255,0.85)" />
+            </svg>
+            {aiLoading ? 'Generating…' : 'AI assist'}
+          </button>
+        </div>
         <textarea
           value={content} onChange={e => setContent(e.target.value)}
           placeholder="Share your thinking. Be specific. Give people something to respond to."

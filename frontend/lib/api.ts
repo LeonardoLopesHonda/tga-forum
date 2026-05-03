@@ -74,3 +74,11 @@ export async function replyToComment(commentId: string, content: string): Promis
 }
 export async function deleteComment(id: string) { return req('DELETE', `/comments/${id}`); }
 
+export type AiAssistResponse = { title: string | null; content: string | null };
+export async function aiAssistPost(title?: string, content?: string): Promise<AiAssistResponse> {
+  const body: Record<string, string> = {};
+  if (title)   body.title   = title;
+  if (content) body.content = content;
+  return req<AiAssistResponse>('POST', '/ai/post-assist', body);
+}
+
