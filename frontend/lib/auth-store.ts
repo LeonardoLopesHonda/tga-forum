@@ -51,19 +51,9 @@ const store = {
   async login(email: string, password: string): Promise<AuthUser> {
     const data = await api.login(email, password);
     store.token = data.access_token;
-    let user: AuthUser;
-    try {
-      const payload = JSON.parse(atob(data.access_token.split('.')[1]));
-      const userId: string = payload.sub;
-      const userEmail: string = payload.email ?? email;
-      user = { user_id: userId, email: userEmail, username: '' };
-      store.user = user;
-      const me = await api.getMe();
-      user = { user_id: userId, email: userEmail, username: me.username };
-    } catch (_) {
-      user = { user_id: '', email, username: email.split('@')[0] };
-    }
-    store.user = user;
+    const me = await api.getMe();
+    const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+    store.user = { user_id: payload.sub, email: payload.email ?? email, username: me.username };
     saveUser(store.user);
     notify();
     return store.user;
