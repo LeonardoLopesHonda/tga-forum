@@ -49,7 +49,7 @@ export default function PostCard({ post, commentCount }: Props) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Avatar user={user} size={22} />
         <Link
-          href={`/profile/${user.username}`}
+          href={`/profile/${encodeURIComponent(user.username)}`}
           onClick={e => e.stopPropagation()}
           style={{ fontSize: 12, color: 'var(--cream-3)', textDecoration: 'none' }}
         >{user.username}</Link>

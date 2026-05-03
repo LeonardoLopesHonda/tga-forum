@@ -178,7 +178,7 @@ export default function Header({ onAuthOpen }: Props) {
                       <div style={{ fontSize: 11, color: 'var(--cream-3)', marginTop: 2 }}>{auth.user.email}</div>
                     </div>
                     <button
-                      onClick={() => { router.push(`/profile/${auth.user!.username}`); setDropdownOpen(false); }}
+                      onClick={() => { router.push(`/profile/${encodeURIComponent(auth.user!.username)}`); setDropdownOpen(false); }}
                       style={{
                         width: '100%', background: 'none', border: 'none', cursor: 'pointer',
                         padding: '10px 16px', textAlign: 'left', fontSize: 13,

@@ -7,6 +7,9 @@ from core.supabase import supabase
 from db.database import get_db
 from models.token import Token
 from pydantic import BaseModel
+import re
+
+USERNAME_RE = re.compile(r'^[A-Za-z0-9_-]{1,20}$')
 
 router = APIRouter()
 
@@ -17,6 +20,8 @@ class SignUpBody(BaseModel):
 
 @router.post("/auth/signup", response_model=Token)
 def signup(body: SignUpBody, db: Session = Depends(get_db)):
+    if not USERNAME_RE.match(body.username):
+        raise HTTPException(status_code=400, detail="Username must be 1–20 characters and contain only letters, numbers, underscores, or hyphens.")
     try:
         response = supabase.auth.sign_up({
             "email": body.email,
