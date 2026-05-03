@@ -31,6 +31,14 @@ const store = {
   init() {
     this.token = api.getToken();
     this.user  = loadUser();
+    if (this.token) {
+      api.getMe().then(me => {
+        if (!store.user) return;
+        store.user = { ...store.user, username: me.username };
+        saveUser(store.user);
+        notify();
+      }).catch(() => {});
+    }
   },
 
   subscribe(fn: Listener): () => void {
