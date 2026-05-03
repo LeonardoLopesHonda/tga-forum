@@ -47,10 +47,11 @@ const store = {
     try {
       const payload = JSON.parse(atob(data.access_token.split('.')[1]));
       const userId: string = payload.sub;
-      const storedUser = loadUser();
-      const username = (storedUser?.user_id === userId ? storedUser.username : null)
-        ?? (payload.email ?? email).split('@')[0];
-      user = { user_id: userId, email: payload.email ?? email, username };
+      const userEmail: string = payload.email ?? email;
+      user = { user_id: userId, email: userEmail, username: '' };
+      store.user = user;
+      const me = await api.getMe();
+      user = { user_id: userId, email: userEmail, username: me.username };
     } catch (_) {
       user = { user_id: '', email, username: email.split('@')[0] };
     }

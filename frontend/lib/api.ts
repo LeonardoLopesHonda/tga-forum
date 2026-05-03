@@ -79,11 +79,14 @@ export type AiAssistResponse = { title: string | null; content: string | null };
 export type UserPublic  = { user_id: string; username: string; bio: string | null };
 export type ProfilePublic = UserPublic & { posts: PostPublic[] };
 
+export async function getMe(): Promise<UserPublic> {
+  return req<UserPublic>('GET', '/users/me');
+}
 export async function getProfile(username: string): Promise<ProfilePublic> {
-  return req<ProfilePublic>('GET', `/users/${username}`);
+  return req<ProfilePublic>('GET', `/users/${encodeURIComponent(username)}`);
 }
 export async function updateBio(username: string, bio: string): Promise<UserPublic> {
-  return req<UserPublic>('PATCH', `/users/${username}`, { bio });
+  return req<UserPublic>('PATCH', `/users/${encodeURIComponent(username)}`, { bio });
 }
 export async function aiAssistPost(title?: string, content?: string): Promise<AiAssistResponse> {
   const body: Record<string, string> = {};
