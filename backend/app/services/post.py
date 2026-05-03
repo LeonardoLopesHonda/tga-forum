@@ -4,7 +4,7 @@ from models.post import PostCreate, PostUpdate
 from db.database import Post, PostWithUsername
 
 def get_all_posts(db: Session):
-    posts = db.query(PostWithUsername).all()
+    posts = db.query(PostWithUsername).order_by(PostWithUsername.created_at.desc()).all()
     if not posts:
         return []
     return posts
@@ -36,7 +36,8 @@ def create_post(db: Session, body: PostCreate, user_id: UUID):
     db.add(post)
     db.commit()
     db.refresh(post)
-    return db.query(PostWithUsername).filter(PostWithUsername.post_id == post.post_id).first()
+    post = db.query(PostWithUsername).filter(PostWithUsername.post_id == post.post_id).first()
+    return post
 
 def delete_post(db: Session, post: Post):
     db.delete(post)
