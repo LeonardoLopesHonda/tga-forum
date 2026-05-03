@@ -13,6 +13,12 @@ def populate_profile(id: str, username: str, db: Session):
     db.add(profile)
     db.commit()
 
+def get_user_by_id(user_id: UUID, db: Session):
+    user = db.query(Profile).filter(Profile.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
 def get_user_by_username(username: str, db: Session):
     user = db.query(Profile).filter(Profile.username == username).first()
     if not user:
