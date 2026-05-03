@@ -61,7 +61,6 @@ def _generate_openai(user_message: str) -> AiPostAssistResponse:
         print(f"[ai] OpenAI error: {type(e).__name__}: {e}")
         raise HTTPException(status_code=502, detail=f"AI service unavailable: {e}")
 
-
 def _generate_gemini(user_message: str) -> AiPostAssistResponse:
     try:
         from google import genai
@@ -79,7 +78,6 @@ def _generate_gemini(user_message: str) -> AiPostAssistResponse:
     except Exception as e:
         print(f"[ai] Gemini error: {type(e).__name__}: {e}")
         raise HTTPException(status_code=502, detail=f"AI service unavailable: {e}")
-
 
 def generate_response(user_message: str) -> AiPostAssistResponse:
     provider = settings.AI_PROVIDER
