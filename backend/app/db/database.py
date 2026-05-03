@@ -49,7 +49,7 @@ class Profile(Base):
 
 class PostWithUsername(Base):
     __tablename__ = "post_with_username"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"keep_existing": True}
 
     post_id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(nullable=False)
@@ -61,7 +61,7 @@ class PostWithUsername(Base):
 
 class CommentWithUsername(Base):
     __tablename__ = "comment_with_username"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"keep_existing": True}
 
     comment_id: Mapped[int] = mapped_column(primary_key=True)
     content: Mapped[str] = mapped_column(nullable=False)
