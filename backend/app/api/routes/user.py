@@ -26,7 +26,8 @@ def get_user_comments(user_id: str, current_user: TokenData = Depends(get_curren
 
 @router.get("/users/me", response_model=UserPublic)
 def get_me(current_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)):
-    return get_user_by_id(current_user.user_id, db)
+    user = get_user_by_id(current_user.user_id, db)
+    return {"user_id": user.id, "username": user.username, "bio": user.bio}
 
 @router.get("/users/{username}", response_model=UserProfile)
 def get_user_profile(username: str, db: Session = Depends(get_db)):
@@ -37,4 +38,4 @@ def update_user_profile(body: UserPatch, username: str, current_user: TokenData 
     user = get_user_by_username(username, db)
     if current_user.user_id != user.id:
         raise HTTPException(status_code=403, detail="Forbidden")
-    return update_profile(user, body, db)
+    return update_profile(user, body, db)  # update_profile handles its own mapping

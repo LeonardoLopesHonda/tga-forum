@@ -13,17 +13,17 @@ def populate_profile(id: str, username: str, db: Session):
     db.add(profile)
     db.commit()
 
-def get_user_by_id(user_id: UUID, db: Session):
+def get_user_by_id(user_id: UUID, db: Session) -> Profile:
     user = db.query(Profile).filter(Profile.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"user_id": user.id, "username": user.username, "bio": user.bio}
+    return user
 
-def get_user_by_username(username: str, db: Session):
+def get_user_by_username(username: str, db: Session) -> Profile:
     user = db.query(Profile).filter(Profile.username == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"user_id": user.id, "username": user.username, "bio": user.bio}
+    return user
 
 def get_user_profile_with_posts(username: str, db: Session):
     user = get_user_by_username(username, db)
