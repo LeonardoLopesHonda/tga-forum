@@ -17,13 +17,13 @@ def get_user_by_id(user_id: UUID, db: Session):
     user = db.query(Profile).filter(Profile.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return {"user_id": user.id, "username": user.username, "bio": user.bio}
 
 def get_user_by_username(username: str, db: Session):
     user = db.query(Profile).filter(Profile.username == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return {"user_id": user.id, "username": user.username, "bio": user.bio}
 
 def get_user_profile_with_posts(username: str, db: Session):
     user = get_user_by_username(username, db)
