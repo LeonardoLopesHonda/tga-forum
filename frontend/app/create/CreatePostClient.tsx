@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as api from '@/lib/api';
 import { aiAssistPost } from '@/lib/api';
-import authStore, { type AuthUser } from '@/lib/auth-store';
+import authStore, { useAuth } from '@/lib/auth-store';
 import toast from '@/lib/toast';
-import AuthModal from '@/app/components/AuthModal';
 
 const TAGS = ['Engineering', 'Explore', 'Connect'] as const;
 type Tag = typeof TAGS[number];
@@ -18,53 +17,40 @@ const TAG_COLORS: Record<Tag, { bg: string; border: string; text: string }> = {
 };
 
 export default function CreatePostClient() {
-  const [auth, setAuth]         = useState<{ user: AuthUser | null }>({ user: null });
-  const [authReady, setAuthReady] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
-  const [title, setTitle]       = useState('');
-  const [content, setContent]   = useState('');
-  const [tag, setTag]           = useState<Tag | ''>('');
+  const { user, ready } = useAuth();
+  const [title, setTitle]           = useState('');
+  const [content, setContent]       = useState('');
+  const [tag, setTag]               = useState<Tag | ''>('');
   const [submitting, setSubmitting] = useState(false);
   const [aiLoading, setAiLoading]   = useState(false);
-  const [error, setError]       = useState('');
-  const [done, setDone]         = useState(false);
+  const [error, setError]           = useState('');
+  const [done, setDone]             = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    authStore.init();
-    setAuth({ user: authStore.user });
-    setAuthReady(true);
-    const unsub = authStore.subscribe((user) => setAuth({ user }));
-    return unsub;
-  }, []);
+  if (!ready) return null;
 
-  if (!authReady) return null;
-
-  if (!auth.user) return (
-    <>
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
-      <div style={{ maxWidth: 600, margin: '0 auto', padding: '120px 24px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(212,168,67,0.6)', marginBottom: 14 }}>
-          Members only
-        </p>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 400, color: 'var(--cream)', marginBottom: 14, lineHeight: 1.2 }}>
-          Sign in to post a discussion.
-        </h2>
-        <p style={{ fontSize: 15, color: 'var(--cream-2)', marginBottom: 32, lineHeight: 1.65 }}>
-          Create a free account to share your ideas with the community.
-        </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <button onClick={() => setAuthOpen(true)} style={{
-            background: 'var(--gold)', color: '#05040A', border: 'none', borderRadius: 6,
-            padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-          }}>Sign in / Join TGA</button>
-          <button onClick={() => router.push('/')} style={{
-            background: 'transparent', color: 'var(--cream-2)', border: '1px solid rgba(212,168,67,0.20)',
-            borderRadius: 6, padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, cursor: 'pointer',
-          }}>Back to forum</button>
-        </div>
+  if (!user) return (
+    <div style={{ maxWidth: 600, margin: '0 auto', padding: '120px 24px', textAlign: 'center' }}>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(212,168,67,0.6)', marginBottom: 14 }}>
+        Members only
+      </p>
+      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 400, color: 'var(--cream)', marginBottom: 14, lineHeight: 1.2 }}>
+        Sign in to post a discussion.
+      </h2>
+      <p style={{ fontSize: 15, color: 'var(--cream-2)', marginBottom: 32, lineHeight: 1.65 }}>
+        Create a free account to share your ideas with the community.
+      </p>
+      <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+        <button onClick={() => authStore.openModal()} style={{
+          background: 'var(--gold)', color: '#05040A', border: 'none', borderRadius: 6,
+          padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+        }}>Sign in / Join TGA</button>
+        <button onClick={() => router.push('/')} style={{
+          background: 'transparent', color: 'var(--cream-2)', border: '1px solid rgba(212,168,67,0.20)',
+          borderRadius: 6, padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, cursor: 'pointer',
+        }}>Back to forum</button>
       </div>
-    </>
+    </div>
   );
 
   if (done) return (
@@ -150,7 +136,7 @@ export default function CreatePostClient() {
         What's on your mind?
       </h1>
       <p style={{ fontSize: 14, color: 'var(--cream-3)', marginBottom: 36 }}>
-        Posting as {auth.user.username || auth.user.email}
+        Posting as {user.username || user.email}
       </p>
 
       {/* Tag selector */}

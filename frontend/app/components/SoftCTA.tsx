@@ -1,19 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import authStore, { type AuthUser } from '@/lib/auth-store';
+import authStore, { useAuth } from '@/lib/auth-store';
 
-export default function SoftCTA({ onAuthOpen }: { onAuthOpen: () => void }) {
-  const [auth, setAuth] = useState<{ user: AuthUser | null }>({ user: null });
+export default function SoftCTA() {
+  const { user } = useAuth();
 
-  useEffect(() => {
-    authStore.init();
-    setAuth({ user: authStore.user });
-    const unsub = authStore.subscribe((user) => setAuth({ user }));
-    return unsub;
-  }, []);
-
-  if (auth.user) return null;
+  if (user) return null;
 
   return (
     <div style={{
@@ -31,7 +23,7 @@ export default function SoftCTA({ onAuthOpen }: { onAuthOpen: () => void }) {
           Create a free account to reply, post your questions, and find your people.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button onClick={onAuthOpen}
+          <button onClick={() => authStore.openModal()}
             onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = 'var(--gold-light)'; el.style.boxShadow = '0 0 22px rgba(212,168,67,0.28)'; }}
             onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = 'var(--gold)'; el.style.boxShadow = 'none'; }}
             style={{
@@ -39,7 +31,7 @@ export default function SoftCTA({ onAuthOpen }: { onAuthOpen: () => void }) {
               padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600,
               cursor: 'pointer', transition: 'background 0.2s var(--ease)',
             }}>Create account</button>
-          <button onClick={onAuthOpen}
+          <button onClick={() => authStore.openModal()}
             onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = 'rgba(212,168,67,0.45)'; el.style.color = 'var(--cream)'; }}
             onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = 'rgba(212,168,67,0.20)'; el.style.color = 'var(--cream-2)'; }}
             style={{

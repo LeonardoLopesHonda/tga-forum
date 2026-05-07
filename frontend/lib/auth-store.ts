@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import * as api from './api';
 
 const STORE_KEY = 'tga_user';
@@ -25,8 +26,9 @@ function notify() {
 }
 
 const store = {
-  user:  null as AuthUser | null,
-  token: null as string | null,
+  user:       null as AuthUser | null,
+  token:      null as string | null,
+  modalOpen:  false,
 
   init() {
     this.token = api.getToken();
@@ -47,6 +49,9 @@ const store = {
   },
 
   isLoggedIn() { return !!this.token && !!this.user; },
+
+  openModal()  { store.modalOpen = true;  notify(); },
+  closeModal() { store.modalOpen = false; notify(); },
 
   async login(email: string, password: string): Promise<AuthUser> {
     const data = await api.login(email, password);
@@ -83,5 +88,27 @@ const store = {
     notify();
   },
 };
+
+export function useAuth() {
+  const [user, setUser]           = useState<AuthUser | null>(null);
+  const [token, setToken]         = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [ready, setReady]         = useState(false);
+
+  useEffect(() => {
+    store.init();
+    setUser(store.user);
+    setToken(store.token);
+    setModalOpen(store.modalOpen);
+    setReady(true);
+    return store.subscribe((u, t) => {
+      setUser(u);
+      setToken(t);
+      setModalOpen(store.modalOpen);
+    });
+  }, []);
+
+  return { user, token, modalOpen, ready, isLoggedIn: !!token && !!user };
+}
 
 export default store;

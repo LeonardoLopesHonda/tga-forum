@@ -5,11 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import * as api from '@/lib/api';
 import type { PostPublic, CommentPublic } from '@/lib/api';
-import authStore, { type AuthUser } from '@/lib/auth-store';
+import authStore, { useAuth, type AuthUser } from '@/lib/auth-store';
 import Avatar, { deriveUser } from '@/app/components/Avatar';
 import TagChip from '@/app/components/TagChip';
 import Shimmer from '@/app/components/Shimmer';
-import AuthModal from '@/app/components/AuthModal';
 
 function renderBody(text: string) {
   return (text || '').split('\n\n').map((para, i) => {
@@ -22,14 +21,14 @@ function renderBody(text: string) {
   });
 }
 
-function AuthGate({ onAuthOpen }: { onAuthOpen: () => void }) {
+function AuthGate() {
   return (
     <div style={{
       background: 'var(--depth-1)', border: '1px solid rgba(212,168,67,0.14)', borderRadius: 6,
       padding: '20px 24px', marginBottom: 32, textAlign: 'center',
     }}>
       <p style={{ fontSize: 14, color: 'var(--cream-2)', marginBottom: 12 }}>Sign in to join this conversation.</p>
-      <button onClick={onAuthOpen}
+      <button onClick={() => authStore.openModal()}
         onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold-light)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold)'; }}
         style={{
@@ -137,7 +136,7 @@ function CommentNode({
   );
 }
 
-function CommentSection({ postId, onAuthOpen, currentUser }: { postId: string; onAuthOpen: () => void; currentUser: AuthUser | null }) {
+function CommentSection({ postId, currentUser }: { postId: string; currentUser: AuthUser | null }) {
   const [comments, setComments]     = useState<CommentPublic[]>([]);
   const [loading, setLoading]       = useState(true);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -227,7 +226,7 @@ function CommentSection({ postId, onAuthOpen, currentUser }: { postId: string; o
           </div>
         </div>
       ) : (
-        <AuthGate onAuthOpen={onAuthOpen} />
+        <AuthGate />
       )}
 
       {loading && (
@@ -255,16 +254,8 @@ export default function PostDetailClient({ postId }: { postId: string }) {
   const [post, setPost]       = useState<PostPublic | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
-  const [auth, setAuth]       = useState<{ user: AuthUser | null }>({ user: null });
-  const [authOpen, setAuthOpen] = useState(false);
+  const { user }              = useAuth();
   const router = useRouter();
-
-  useEffect(() => {
-    authStore.init();
-    setAuth({ user: authStore.user });
-    const unsub = authStore.subscribe((user) => setAuth({ user }));
-    return unsub;
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -278,7 +269,7 @@ export default function PostDetailClient({ postId }: { postId: string }) {
   }, [postId]);
 
   const author      = post ? { ...deriveUser(post.user_id), username: post.username } : null;
-  const isOwn       = auth.user && post && auth.user.user_id === post.user_id;
+  const isOwn       = user && post && user.user_id === post.user_id;
 
   if (loading) return (
     <div style={{ maxWidth: 700, margin: '0 auto', padding: '100px 24px 80px' }}>
@@ -300,7 +291,6 @@ export default function PostDetailClient({ postId }: { postId: string }) {
 
   return (
     <>
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '100px 24px 80px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }}>
           <button onClick={() => router.push('/')}
@@ -337,7 +327,7 @@ export default function PostDetailClient({ postId }: { postId: string }) {
 
         <div style={{ height: 1, background: 'rgba(212,168,67,0.08)', marginBottom: 8 }} />
 
-        <CommentSection postId={post.post_id} onAuthOpen={() => setAuthOpen(true)} currentUser={auth.user} />
+        <CommentSection postId={post.post_id} currentUser={user ?? null} />
       </div>
     </>
   );

@@ -1,24 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import authStore, { type AuthUser } from '@/lib/auth-store';
+import authStore, { useAuth } from '@/lib/auth-store';
 
 const LaniakeaCanvas = dynamic(() => import('./LaniakeaCanvas'), { ssr: false });
 
-type Props = { onAuthOpen: () => void };
-
-export default function Hero({ onAuthOpen }: Props) {
-  const [auth, setAuth] = useState<{ user: AuthUser | null }>({ user: null });
+export default function Hero() {
+  const { user } = useAuth();
   const router = useRouter();
-
-  useEffect(() => {
-    authStore.init();
-    setAuth({ user: authStore.user });
-    const unsub = authStore.subscribe((user) => setAuth({ user }));
-    return unsub;
-  }, []);
 
   const scrollToPosts = () => {
     document.getElementById('posts')?.scrollIntoView({ behavior: 'smooth' });
@@ -60,7 +50,7 @@ export default function Hero({ onAuthOpen }: Props) {
         </p>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          {auth.user ? (
+          {user ? (
             <button onClick={() => router.push('/create')}
               onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = 'var(--gold-light)'; el.style.boxShadow = '0 0 28px rgba(212,168,67,0.32)'; }}
               onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = 'var(--gold)'; el.style.boxShadow = 'none'; }}
@@ -72,7 +62,7 @@ export default function Hero({ onAuthOpen }: Props) {
               Start a discussion
             </button>
           ) : (
-            <button onClick={onAuthOpen}
+            <button onClick={() => authStore.openModal()}
               onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = 'var(--gold-light)'; el.style.boxShadow = '0 0 28px rgba(212,168,67,0.32)'; }}
               onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.background = 'var(--gold)'; el.style.boxShadow = 'none'; }}
               style={{

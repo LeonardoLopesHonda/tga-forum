@@ -4,9 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Avatar, { deriveUser } from './Avatar';
-import authStore, { type AuthUser } from '@/lib/auth-store';
-
-type Props = { onAuthOpen: () => void };
+import authStore, { useAuth, type AuthUser } from '@/lib/auth-store';
 
 function HamburgerIcon({ open }: { open: boolean }) {
   return (
@@ -27,7 +25,7 @@ function HamburgerIcon({ open }: { open: boolean }) {
   );
 }
 
-function MobileDrawer({ open, onClose, onAuthOpen, auth }: { open: boolean; onClose: () => void; onAuthOpen: () => void; auth: { user: AuthUser | null } }) {
+function MobileDrawer({ open, onClose, auth }: { open: boolean; onClose: () => void; auth: { user: AuthUser | null } }) {
   const router = useRouter();
   useEffect(() => { document.body.style.overflow = open ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [open]);
 
@@ -64,11 +62,11 @@ function MobileDrawer({ open, onClose, onAuthOpen, auth }: { open: boolean; onCl
           }}>Sign out ({auth.user.username || auth.user.email})</button>
         ) : (
           <>
-            <button onClick={() => { onAuthOpen(); onClose(); }} style={{
+            <button onClick={() => { authStore.openModal(); onClose(); }} style={{
               background: 'var(--gold)', color: '#05040A', border: 'none', borderRadius: 6,
               padding: 14, fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600, cursor: 'pointer', width: '100%',
             }}>Sign in</button>
-            <button onClick={() => { onAuthOpen(); onClose(); }} style={{
+            <button onClick={() => { authStore.openModal(); onClose(); }} style={{
               background: 'transparent', color: 'var(--cream-2)', border: '1px solid rgba(212,168,67,0.22)',
               borderRadius: 6, padding: 14, fontFamily: 'var(--font-body)', fontSize: 15, cursor: 'pointer', width: '100%',
             }}>Create account</button>
@@ -79,22 +77,16 @@ function MobileDrawer({ open, onClose, onAuthOpen, auth }: { open: boolean; onCl
   );
 }
 
-export default function Header({ onAuthOpen }: Props) {
+export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [auth, setAuth] = useState<{ user: AuthUser | null }>({ user: null });
+  const { user } = useAuth();
+  const auth = { user };
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router   = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    authStore.init();
-    setAuth({ user: authStore.user });
-    const unsub = authStore.subscribe((user) => setAuth({ user }));
-    return unsub;
-  }, []);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 32);
@@ -203,7 +195,7 @@ export default function Header({ onAuthOpen }: Props) {
                 )}
               </div>
             ) : (
-              <button onClick={onAuthOpen}
+              <button onClick={() => authStore.openModal()}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold-light)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold)'; }}
                 style={{
@@ -223,7 +215,7 @@ export default function Header({ onAuthOpen }: Props) {
         )}
       </header>
 
-      <MobileDrawer open={menuOpen} onClose={() => setMenuOpen(false)} onAuthOpen={onAuthOpen} auth={auth} />
+      <MobileDrawer open={menuOpen} onClose={() => setMenuOpen(false)} auth={auth} />
     </>
   );
 }

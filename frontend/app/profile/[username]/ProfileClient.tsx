@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import * as api from '@/lib/api';
 import type { ProfilePublic } from '@/lib/api';
-import authStore, { type AuthUser } from '@/lib/auth-store';
+import { useAuth } from '@/lib/auth-store';
 import Avatar, { deriveUser } from '@/app/components/Avatar';
 import PostCard from '@/app/components/PostCard';
 import Shimmer from '@/app/components/Shimmer';
@@ -12,19 +12,12 @@ const BIO_MAX = 160;
 
 export default function ProfileClient({ username }: { username: string }) {
   const [profile, setProfile]   = useState<ProfilePublic | null>(null);
-  const [auth, setAuth]         = useState<{ user: AuthUser | null }>({ user: null });
+  const { user }                = useAuth();
   const [notFound, setNotFound] = useState(false);
   const [editing, setEditing]   = useState(false);
   const [draft, setDraft]       = useState('');
   const [saving, setSaving]     = useState(false);
   const [error, setError]       = useState<string | null>(null);
-
-  useEffect(() => {
-    authStore.init();
-    setAuth({ user: authStore.user });
-    const unsub = authStore.subscribe((user) => setAuth({ user }));
-    return unsub;
-  }, []);
 
   useEffect(() => {
     api.getProfile(username)
@@ -34,7 +27,7 @@ export default function ProfileClient({ username }: { username: string }) {
       });
   }, [username]);
 
-  const isOwner = auth.user?.username === username;
+  const isOwner = user?.username === username;
 
   function startEdit() {
     setDraft(profile?.bio ?? '');
