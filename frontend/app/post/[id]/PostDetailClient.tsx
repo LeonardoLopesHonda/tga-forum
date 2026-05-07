@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import * as api from '@/lib/api';
-import type { PostPublic } from '@/lib/api';
+import * as posts from '@/lib/api/posts';
+import type { PostPublic } from '@/lib/api/posts';
 import { useAuth } from '@/lib/auth-store';
 import Avatar, { deriveUser } from '@/app/components/Avatar';
 import Shimmer from '@/app/components/Shimmer';
@@ -31,7 +31,7 @@ export default function PostDetailClient({ postId }: { postId: string }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true); setError(''); setPost(null);
-    api.getPost(postId)
+    posts.get(postId)
       .then(data => { if (!cancelled) { setPost(data); setLoading(false); } })
       .catch(()  => { if (!cancelled) { setError('Post not found.'); setLoading(false); } });
     return () => { cancelled = true; };
@@ -71,7 +71,7 @@ export default function PostDetailClient({ postId }: { postId: string }) {
           }}>← Forum</button>
         {isOwn && (
           <button
-            onClick={async () => { try { await api.deletePost(post.post_id); } catch (_) { /* noop */ } router.push('/'); }}
+            onClick={async () => { try { await posts.remove(post.post_id); } catch (_) { /* noop */ } router.push('/'); }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#c07070'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--cream-4)'; }}
             style={{

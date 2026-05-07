@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { CommentPublic } from '@/lib/api';
+import type { CommentPublic } from '@/lib/api/comments';
 import authStore from '@/lib/auth-store';
 import Avatar, { deriveUser } from '@/app/components/Avatar';
 import { useCommentContext } from './CommentContext';

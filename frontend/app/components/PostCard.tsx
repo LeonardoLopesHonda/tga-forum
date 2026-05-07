@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { PostPublic } from '@/lib/api';
+import type { PostPublic } from '@/lib/api/posts';
 import Avatar, { deriveUser } from './Avatar';
 import TagChip from './TagChip';
 

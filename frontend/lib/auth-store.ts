@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import * as api from './api';
+import * as auth from './api/auth';
+import * as users from './api/users';
 
 const STORE_KEY = 'tga_user';
 
@@ -31,10 +32,10 @@ const store = {
   modalOpen:  false,
 
   init() {
-    this.token = api.getToken();
+    this.token = auth.getToken();
     this.user  = loadUser();
     if (this.token) {
-      api.getMe().then(me => {
+      users.me().then(me => {
         if (!store.user) return;
         store.user = { ...store.user, username: me.username };
         saveUser(store.user);
@@ -54,9 +55,9 @@ const store = {
   closeModal() { store.modalOpen = false; notify(); },
 
   async login(email: string, password: string): Promise<AuthUser> {
-    const data = await api.login(email, password);
+    const data = await auth.login(email, password);
     store.token = data.access_token;
-    const me = await api.getMe();
+    const me = await users.me();
     const payload = JSON.parse(atob(data.access_token.split('.')[1]));
     store.user = { user_id: payload.sub, email: payload.email ?? email, username: me.username };
     saveUser(store.user);
@@ -65,7 +66,7 @@ const store = {
   },
 
   async register(username: string, email: string, password: string): Promise<AuthUser> {
-    const data = await api.register(username, email, password);
+    const data = await auth.register(username, email, password);
     store.token = data.access_token;
     let user: AuthUser;
     try {
@@ -81,7 +82,7 @@ const store = {
   },
 
   logout() {
-    api.logout();
+    auth.logout();
     store.token = null;
     store.user  = null;
     saveUser(null);

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import * as api from '@/lib/api';
-import type { CommentPublic } from '@/lib/api';
+import * as commentsApi from '@/lib/api/comments';
+import type { CommentPublic } from '@/lib/api/comments';
 import type { AuthUser } from '@/lib/auth-store';
 import authStore from '@/lib/auth-store';
 import toast from '@/lib/toast';
@@ -42,7 +42,7 @@ export default function CommentSection({ postId, currentUser }: { postId: string
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    api.getComments(postId)
+    commentsApi.list(postId)
       .then(data  => { if (!cancelled) { setComments(data); setLoading(false); } })
       .catch(()   => { if (!cancelled) { setComments([]);   setLoading(false); } });
     return () => { cancelled = true; };
@@ -60,7 +60,7 @@ export default function CommentSection({ postId, currentUser }: { postId: string
     setNewComment('');
     setSubmitting(true);
     try {
-      const confirmed = await api.createComment(postId, optimistic.content);
+      const confirmed = await commentsApi.create(postId, optimistic.content);
       setComments(prev => prev.map(c => c.comment_id === optimisticId ? confirmed : c));
     } catch (e) {
       setComments(prev => prev.filter(c => c.comment_id !== optimisticId));
@@ -81,7 +81,7 @@ export default function CommentSection({ postId, currentUser }: { postId: string
     setComments(prev => [...prev, optimistic]);
     setReplyingTo(null);
     try {
-      const confirmed = await api.replyToComment(parentId, content.trim());
+      const confirmed = await commentsApi.reply(parentId, content.trim());
       setComments(prev => prev.map(c => c.comment_id === optimisticId ? confirmed : c));
     } catch (e) {
       setComments(prev => prev.filter(c => c.comment_id !== optimisticId));
@@ -92,7 +92,7 @@ export default function CommentSection({ postId, currentUser }: { postId: string
   const handleDelete = async (commentId: string) => {
     setComments(prev => prev.filter(c => c.comment_id !== commentId));
     try {
-      await api.deleteComment(commentId);
+      await commentsApi.remove(commentId);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to delete comment.');
     }

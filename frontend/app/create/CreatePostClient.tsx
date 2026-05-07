@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import * as api from '@/lib/api';
-import { aiAssistPost } from '@/lib/api';
+import * as posts from '@/lib/api/posts';
+import * as ai from '@/lib/api/ai';
 import authStore, { useAuth } from '@/lib/auth-store';
 import toast from '@/lib/toast';
 import { useField, validators } from '@/lib/use-field';
@@ -87,7 +87,7 @@ export default function CreatePostClient() {
     if (aiLoading || (!title.value.trim() && !content.value.trim())) return;
     setAiLoading(true);
     try {
-      const result = await aiAssistPost(title.value.trim() || undefined, content.value.trim() || undefined);
+      const result = await ai.assistPost(title.value.trim() || undefined, content.value.trim() || undefined);
       if (result.title)   title.reset(result.title);
       if (result.content) content.reset(result.content);
     } catch (e: unknown) {
@@ -101,7 +101,7 @@ export default function CreatePostClient() {
     setServerError(''); setSubmitting(true);
     try {
       // tag is UI-only — backend has no tag field yet
-      await api.createPost(title.value.trim(), content.value.trim());
+      await posts.create(title.value.trim(), content.value.trim());
       setDone(true);
     } catch (e: unknown) {
       const msg = e instanceof Error && (e as Error & { status?: number }).status === 401

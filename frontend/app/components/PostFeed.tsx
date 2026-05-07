@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import * as api from '@/lib/api';
-import type { PostPublic } from '@/lib/api';
+import * as postsApi from '@/lib/api/posts';
+import type { PostPublic } from '@/lib/api/posts';
 import toast from '@/lib/toast';
 import PostCard from './PostCard';
 import Shimmer from './Shimmer';
@@ -26,7 +26,7 @@ export default function PostFeed() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    api.getPosts()
+    postsApi.list()
       .then(data => { if (!cancelled) { setPosts(data); setLoading(false); } })
       .catch((e: unknown) => {
         if (!cancelled) {

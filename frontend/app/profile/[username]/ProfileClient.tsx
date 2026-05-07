@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import * as api from '@/lib/api';
-import type { ProfilePublic } from '@/lib/api';
+import * as users from '@/lib/api/users';
+import type { ProfilePublic } from '@/lib/api/users';
 import { useAuth } from '@/lib/auth-store';
 import { useField, validators } from '@/lib/use-field';
 import Avatar, { deriveUser } from '@/app/components/Avatar';
@@ -21,7 +21,7 @@ export default function ProfileClient({ username }: { username: string }) {
   const bio = useField('', validators.maxLength(BIO_MAX, 'Bio'));
 
   useEffect(() => {
-    api.getProfile(username)
+    users.getProfile(username)
       .then(setProfile)
       .catch((e: Error & { status?: number }) => {
         if (e.status === 404) setNotFound(true);
@@ -46,7 +46,7 @@ export default function ProfileClient({ username }: { username: string }) {
     setSaving(true);
     setServerError(null);
     try {
-      const updated = await api.updateBio(username, bio.value);
+      const updated = await users.updateBio(username, bio.value);
       setProfile({ ...profile, bio: updated.bio });
       setEditing(false);
     } catch (e) {
