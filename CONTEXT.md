@@ -42,3 +42,18 @@ A label that classifies a Post by topic or purpose. A Post belongs to exactly on
 4. Space Engineering — rockets, spacecraft, instrumentation
 5. News & Events — launches, discoveries, sky events
 6. Feature Requests — community-driven product feedback
+
+### Email Confirmation Flow
+Supabase email confirmation is enabled. Signup does not produce a session immediately — the backend returns `202 Accepted` with `{ "pending_confirmation": true }`. The frontend modal transitions to a confirmation screen. When the user clicks the confirmation link, Supabase redirects to `/auth/callback` on the frontend, which exchanges the token for a session and calls `GET /users/me` to complete profile creation.
+
+### Profile Self-Heal
+`GET /users/me` is idempotent with respect to profile creation. If a valid JWT is presented but no `profiles` row exists, the endpoint creates the profile using the `username` from JWT `user_metadata`. If `user_metadata.username` is absent, the endpoint returns a `422` with a clear error. This self-heals accounts where signup completed in Supabase Auth but profile creation failed.
+
+### Session Expiry
+When any API request returns `401`, the frontend API client (`req()`) intercepts it centrally, calls `authStore.logout()`, and emits a persistent toast with a re-login action button. Individual components do not handle `401` themselves.
+
+### Auth Gates
+Private actions (create post, submit comment) are visible to all users. Clicking a private action while logged out opens the auth modal inline — the request is never sent to the backend. The only fully private route is `/create`, which redirects to `/` client-side if the user is not authenticated.
+
+### Toast Actions
+The toast system supports an optional `action: { label: string, onClick: () => void }` field. The toast component renders an action button when present and invokes the callback on click. The toast component has no knowledge of auth or routing — callers provide the behavior.
