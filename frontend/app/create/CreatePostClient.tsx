@@ -6,6 +6,7 @@ import * as api from '@/lib/api';
 import { aiAssistPost } from '@/lib/api';
 import authStore, { useAuth } from '@/lib/auth-store';
 import toast from '@/lib/toast';
+import { useField, validators } from '@/lib/use-field';
 
 const TAGS = ['Engineering', 'Explore', 'Connect'] as const;
 type Tag = typeof TAGS[number];
@@ -18,14 +19,16 @@ const TAG_COLORS: Record<Tag, { bg: string; border: string; text: string }> = {
 
 export default function CreatePostClient() {
   const { user, ready } = useAuth();
-  const [title, setTitle]           = useState('');
-  const [content, setContent]       = useState('');
+  const title   = useField('', validators.minLength(5, 'Title'));
+  const content = useField('', validators.minLength(10, 'Content'));
   const [tag, setTag]               = useState<Tag | ''>('');
   const [submitting, setSubmitting] = useState(false);
   const [aiLoading, setAiLoading]   = useState(false);
-  const [error, setError]           = useState('');
+  const [serverError, setServerError] = useState('');
   const [done, setDone]             = useState(false);
   const router = useRouter();
+
+  const canSubmit = title.isValid && content.isValid && !submitting;
 
   if (!ready) return null;
 
@@ -72,7 +75,7 @@ export default function CreatePostClient() {
             background: 'var(--gold)', color: '#05040A', border: 'none', borderRadius: 6,
             padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'background 0.18s',
           }}>Back to forum</button>
-        <button onClick={() => { setTitle(''); setContent(''); setTag(''); setDone(false); setError(''); }} style={{
+        <button onClick={() => { title.reset(); content.reset(); setTag(''); setDone(false); setServerError(''); }} style={{
           background: 'transparent', color: 'var(--cream-2)', border: '1px solid rgba(212,168,67,0.20)',
           borderRadius: 6, padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, cursor: 'pointer',
         }}>Write another</button>
@@ -80,15 +83,13 @@ export default function CreatePostClient() {
     </div>
   );
 
-  const canSubmit = title.trim().length >= 5 && content.trim().length >= 10 && !submitting;
-
   const handleAiAssist = async () => {
-    if (aiLoading || (!title.trim() && !content.trim())) return;
+    if (aiLoading || (!title.value.trim() && !content.value.trim())) return;
     setAiLoading(true);
     try {
-      const result = await aiAssistPost(title.trim() || undefined, content.trim() || undefined);
-      if (result.title)   setTitle(result.title);
-      if (result.content) setContent(result.content);
+      const result = await aiAssistPost(title.value.trim() || undefined, content.value.trim() || undefined);
+      if (result.title)   title.reset(result.title);
+      if (result.content) content.reset(result.content);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'AI assist failed. Try again.';
       toast.error(msg);
@@ -97,26 +98,19 @@ export default function CreatePostClient() {
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
-    setError(''); setSubmitting(true);
+    setServerError(''); setSubmitting(true);
     try {
       // tag is UI-only — backend has no tag field yet
-      await api.createPost(title.trim(), content.trim());
+      await api.createPost(title.value.trim(), content.value.trim());
       setDone(true);
     } catch (e: unknown) {
       const msg = e instanceof Error && (e as Error & { status?: number }).status === 401
         ? 'Your session expired. Please sign in again.'
         : (e instanceof Error ? e.message : 'Something went wrong. Try again.');
-      setError(msg);
+      setServerError(msg);
       toast.error(msg);
     } finally { setSubmitting(false); }
   };
-
-  const statusMsg = submitting ? 'Posting…'
-    : !title.trim() ? 'Add a title'
-    : title.trim().length < 5 ? 'Title too short'
-    : !content.trim() ? 'Add some content'
-    : content.trim().length < 10 ? 'Content too short'
-    : 'Ready to post';
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '100px 24px 80px' }}>
@@ -163,19 +157,21 @@ export default function CreatePostClient() {
       <div style={{ marginBottom: 22 }}>
         <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 8, letterSpacing: '0.04em' }}>Title</label>
         <input
-          value={title} onChange={e => setTitle(e.target.value)}
+          {...title}
           placeholder="A specific, interesting question or statement" maxLength={160}
           onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(212,168,67,0.50)'; }}
-          onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(212,168,67,0.20)'; }}
           style={{
             width: '100%', background: 'var(--depth-1)', border: '1px solid rgba(212,168,67,0.20)',
             borderRadius: 6, padding: '12px 16px', fontFamily: 'var(--font-display)', fontSize: 18,
             color: 'var(--cream)', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.18s',
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
-          <span style={{ fontSize: 11, color: title.length > 140 ? '#c07070' : 'var(--cream-4)' }}>
-            {title.length}/160
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+          {title.error
+            ? <span style={{ fontSize: 11, color: '#c07070' }}>{title.error}</span>
+            : <span />}
+          <span style={{ fontSize: 11, color: title.value.length > 140 ? '#c07070' : 'var(--cream-4)' }}>
+            {title.value.length}/160
           </span>
         </div>
       </div>
@@ -186,7 +182,7 @@ export default function CreatePostClient() {
           <label style={{ fontSize: 12, color: 'var(--cream-2)', letterSpacing: '0.04em' }}>Content</label>
           <button
             onClick={handleAiAssist}
-            disabled={aiLoading || (!title.trim() && !content.trim())}
+            disabled={aiLoading || (!title.value.trim() && !content.value.trim())}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: 'transparent',
@@ -194,12 +190,12 @@ export default function CreatePostClient() {
               borderRadius: 5, padding: '5px 12px',
               fontFamily: 'var(--font-body)', fontSize: 12, letterSpacing: '0.05em',
               color: aiLoading ? 'rgba(140,160,255,0.45)' : 'rgba(160,200,255,0.80)',
-              cursor: aiLoading || (!title.trim() && !content.trim()) ? 'default' : 'pointer',
+              cursor: aiLoading || (!title.value.trim() && !content.value.trim()) ? 'default' : 'pointer',
               transition: 'all 0.18s var(--ease)',
-              opacity: (!title.trim() && !content.trim()) ? 0.4 : 1,
+              opacity: (!title.value.trim() && !content.value.trim()) ? 0.4 : 1,
             }}
             onMouseEnter={e => {
-              if (!aiLoading && (title.trim() || content.trim())) {
+              if (!aiLoading && (title.value.trim() || content.value.trim())) {
                 const el = e.currentTarget as HTMLButtonElement;
                 el.style.borderColor = 'rgba(140,160,255,0.55)';
                 el.style.background = 'rgba(100,120,255,0.08)';
@@ -211,7 +207,6 @@ export default function CreatePostClient() {
               el.style.background = 'transparent';
             }}
           >
-            {/* Sparkle icon — two 4-pointed stars, blue + purple */}
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
               <path d="M9.5 1 L10.15 3.85 L13 4.5 L10.15 5.15 L9.5 8 L8.85 5.15 L6 4.5 L8.85 3.85 Z" fill="rgba(140,180,255,0.90)" />
               <path d="M3.5 7 L3.9 8.6 L5.5 9 L3.9 9.4 L3.5 11 L3.1 9.4 L1.5 9 L3.1 8.6 Z" fill="rgba(180,130,255,0.85)" />
@@ -220,10 +215,9 @@ export default function CreatePostClient() {
           </button>
         </div>
         <textarea
-          value={content} onChange={e => setContent(e.target.value)}
+          {...content}
           placeholder="Share your thinking. Be specific. Give people something to respond to."
           onFocus={e => { (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(212,168,67,0.50)'; }}
-          onBlur={e => { (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(212,168,67,0.20)'; }}
           style={{
             width: '100%', background: 'var(--depth-1)', border: '1px solid rgba(212,168,67,0.20)',
             borderRadius: 6, padding: '14px 16px', fontFamily: 'var(--font-body)', fontSize: 15,
@@ -231,12 +225,13 @@ export default function CreatePostClient() {
             boxSizing: 'border-box', lineHeight: 1.7, transition: 'border-color 0.18s',
           }}
         />
+        {content.error && <p style={{ fontSize: 11, color: '#c07070', marginTop: 4 }}>{content.error}</p>}
       </div>
 
-      {error && <p style={{ fontSize: 13, color: '#c07070', marginBottom: 16, lineHeight: 1.5 }}>{error}</p>}
+      {serverError && <p style={{ fontSize: 13, color: '#c07070', marginBottom: 16, lineHeight: 1.5 }}>{serverError}</p>}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, paddingTop: 8, borderTop: '1px solid rgba(212,168,67,0.08)' }}>
-        <p style={{ fontSize: 12, color: 'var(--cream-4)' }}>{statusMsg}</p>
+        <p style={{ fontSize: 12, color: 'var(--cream-4)' }}>{canSubmit ? 'Ready to post' : 'Fill in all fields'}</p>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', color: 'var(--cream-3)', cursor: 'pointer', fontSize: 14, fontFamily: 'var(--font-body)', padding: '10px 4px' }}>
             Cancel

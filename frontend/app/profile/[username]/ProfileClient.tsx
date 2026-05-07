@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import * as api from '@/lib/api';
 import type { ProfilePublic } from '@/lib/api';
 import { useAuth } from '@/lib/auth-store';
+import { useField, validators } from '@/lib/use-field';
 import Avatar, { deriveUser } from '@/app/components/Avatar';
 import PostCard from '@/app/components/PostCard';
 import Shimmer from '@/app/components/Shimmer';
@@ -15,9 +16,9 @@ export default function ProfileClient({ username }: { username: string }) {
   const { user }                = useAuth();
   const [notFound, setNotFound] = useState(false);
   const [editing, setEditing]   = useState(false);
-  const [draft, setDraft]       = useState('');
   const [saving, setSaving]     = useState(false);
-  const [error, setError]       = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const bio = useField('', validators.maxLength(BIO_MAX, 'Bio'));
 
   useEffect(() => {
     api.getProfile(username)
@@ -30,26 +31,26 @@ export default function ProfileClient({ username }: { username: string }) {
   const isOwner = user?.username === username;
 
   function startEdit() {
-    setDraft(profile?.bio ?? '');
+    bio.reset(profile?.bio ?? '');
     setEditing(true);
-    setError(null);
+    setServerError(null);
   }
 
   function cancelEdit() {
     setEditing(false);
-    setError(null);
+    setServerError(null);
   }
 
   async function saveEdit() {
-    if (!profile) return;
+    if (!profile || !bio.isValid) return;
     setSaving(true);
-    setError(null);
+    setServerError(null);
     try {
-      const updated = await api.updateBio(username, draft);
+      const updated = await api.updateBio(username, bio.value);
       setProfile({ ...profile, bio: updated.bio });
       setEditing(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save');
+      setServerError(e instanceof Error ? e.message : 'Failed to save');
     } finally {
       setSaving(false);
     }
@@ -100,8 +101,7 @@ export default function ProfileClient({ username }: { username: string }) {
         {editing ? (
           <div>
             <textarea
-              value={draft}
-              onChange={e => setDraft(e.target.value.slice(0, BIO_MAX))}
+              {...bio}
               autoFocus
               rows={3}
               style={{
@@ -114,11 +114,11 @@ export default function ProfileClient({ username }: { username: string }) {
               }}
             />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-              <span style={{ fontSize: 12, color: draft.length >= BIO_MAX ? '#c07070' : 'var(--cream-4)' }}>
-                {draft.length}/{BIO_MAX}
+              <span style={{ fontSize: 12, color: bio.value.length >= BIO_MAX ? '#c07070' : 'var(--cream-4)' }}>
+                {bio.value.length}/{BIO_MAX}
               </span>
               <div style={{ display: 'flex', gap: 8 }}>
-                {error && <span style={{ fontSize: 12, color: '#c07070', alignSelf: 'center' }}>{error}</span>}
+                {(bio.error || serverError) && <span style={{ fontSize: 12, color: '#c07070', alignSelf: 'center' }}>{bio.error || serverError}</span>}
                 <button
                   onClick={cancelEdit}
                   style={{

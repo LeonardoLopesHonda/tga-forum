@@ -3,53 +3,52 @@
 import { useState } from 'react';
 import authStore from '@/lib/auth-store';
 import toast from '@/lib/toast';
+import { useField, validators } from '@/lib/use-field';
 
 type Props = { open: boolean; onClose: () => void };
 
-export default function AuthModal({ open, onClose }: Props) {
-  const [mode, setMode]    = useState<'signin' | 'register'>('signin');
-  const [form, setForm]    = useState({ username: '', email: '', password: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError]  = useState('');
+const inputStyle = {
+  width: '100%', background: 'var(--depth-2)',
+  border: '1px solid rgba(212,168,67,0.18)', borderRadius: 6,
+  padding: '10px 14px', fontFamily: 'var(--font-body)', fontSize: 14,
+  color: 'var(--cream)', outline: 'none', boxSizing: 'border-box' as const,
+};
 
-  if (!open) return null;
+export default function AuthModal({ open, onClose }: Props) {
+  const [mode, setMode]       = useState<'signin' | 'register'>('signin');
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
   const isReg = mode === 'register';
 
+  const username = useField('', validators.username());
+  const email    = useField('', validators.compose(validators.required('Email'), validators.email()));
+  const password = useField('', validators.minLength(6, 'Password'));
+
+  const canSubmit = !loading &&
+    (!isReg || username.isValid) &&
+    email.isValid &&
+    password.isValid;
+
+  if (!open) return null;
+
   const handleSubmit = async () => {
-    setError(''); setLoading(true);
+    setServerError(''); setLoading(true);
     try {
       if (isReg) {
-        await authStore.register(form.username, form.email, form.password);
+        await authStore.register(username.value, email.value, password.value);
       } else {
-        await authStore.login(form.email, form.password);
+        await authStore.login(email.value, password.value);
       }
-      setForm({ username: '', email: '', password: '' });
+      username.reset(); email.reset(); password.reset();
       onClose();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Something went wrong. Try again.';
-      setError(msg);
+      setServerError(msg);
       toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
-
-  const field = (label: string, key: keyof typeof form, type: string, placeholder: string) => (
-    <div key={key}>
-      <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 5 }}>{label}</label>
-      <input
-        value={form[key]} type={type} placeholder={placeholder}
-        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-        onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-        style={{
-          width: '100%', background: 'var(--depth-2)',
-          border: '1px solid rgba(212,168,67,0.18)', borderRadius: 6,
-          padding: '10px 14px', fontFamily: 'var(--font-body)', fontSize: 14,
-          color: 'var(--cream)', outline: 'none', boxSizing: 'border-box',
-        }}
-      />
-    </div>
-  );
 
   return (
     <div
@@ -86,22 +85,36 @@ export default function AuthModal({ open, onClose }: Props) {
         </h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13, marginBottom: 16 }}>
-          {isReg && field('Username', 'username', 'text', 'your_handle')}
-          {field('Email', 'email', 'email', 'you@example.com')}
-          {field('Password', 'password', 'password', '••••••••')}
+          {isReg && (
+            <div>
+              <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 5 }}>Username</label>
+              <input {...username} onKeyDown={e => e.key === 'Enter' && handleSubmit()} type="text" placeholder="your_handle" style={inputStyle} />
+              {username.error && <p style={{ fontSize: 11, color: '#c07070', marginTop: 4 }}>{username.error}</p>}
+            </div>
+          )}
+          <div>
+            <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 5 }}>Email</label>
+            <input {...email} onKeyDown={e => e.key === 'Enter' && handleSubmit()} type="email" placeholder="you@example.com" style={inputStyle} />
+            {email.error && <p style={{ fontSize: 11, color: '#c07070', marginTop: 4 }}>{email.error}</p>}
+          </div>
+          <div>
+            <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 5 }}>Password</label>
+            <input {...password} onKeyDown={e => e.key === 'Enter' && handleSubmit()} type="password" placeholder="••••••••" style={inputStyle} />
+            {password.error && <p style={{ fontSize: 11, color: '#c07070', marginTop: 4 }}>{password.error}</p>}
+          </div>
         </div>
 
-        {error && <p style={{ fontSize: 12, color: '#c07070', marginBottom: 12, lineHeight: 1.5 }}>{error}</p>}
+        {serverError && <p style={{ fontSize: 12, color: '#c07070', marginBottom: 12, lineHeight: 1.5 }}>{serverError}</p>}
 
         <button
-          onClick={handleSubmit} disabled={loading}
-          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold-light)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = loading ? 'rgba(212,168,67,0.5)' : 'var(--gold)'; }}
+          onClick={handleSubmit} disabled={!canSubmit}
+          onMouseEnter={e => { if (canSubmit) (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold-light)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = !canSubmit ? 'rgba(212,168,67,0.5)' : 'var(--gold)'; }}
           style={{
-            width: '100%', background: loading ? 'rgba(212,168,67,0.5)' : 'var(--gold)',
+            width: '100%', background: !canSubmit ? 'rgba(212,168,67,0.5)' : 'var(--gold)',
             color: '#05040A', border: 'none', borderRadius: 6, padding: 12,
             fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600,
-            cursor: loading ? 'default' : 'pointer', marginBottom: 16,
+            cursor: !canSubmit ? 'default' : 'pointer', marginBottom: 16,
             transition: 'background 0.2s var(--ease)',
           }}
         >
@@ -111,7 +124,7 @@ export default function AuthModal({ open, onClose }: Props) {
         <p style={{ fontSize: 13, color: 'var(--cream-3)', textAlign: 'center' }}>
           {isReg ? 'Already have an account? ' : "Don’t have an account? "}
           <button
-            onClick={() => { setMode(isReg ? 'signin' : 'register'); setError(''); }}
+            onClick={() => { setMode(isReg ? 'signin' : 'register'); setServerError(''); username.reset(); email.reset(); password.reset(); }}
             style={{
               background: 'none', border: 'none', color: 'var(--gold)', cursor: 'pointer',
               fontSize: 13, fontFamily: 'var(--font-body)', padding: 0, textDecoration: 'underline',

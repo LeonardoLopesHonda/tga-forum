@@ -79,7 +79,7 @@ function CommentNode({
         <p style={{ fontSize: 15, color: 'var(--cream-2)', lineHeight: 1.68, marginBottom: 8, paddingLeft: 32, fontFamily: 'var(--font-body)' }}>
           {comment.content}
         </p>
-        <button onClick={() => onReply(isReplying ? null : comment.comment_id)}
+        <button onClick={() => currentUserId ? onReply(isReplying ? null : comment.comment_id) : authStore.openModal()}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--gold)'; }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = isReplying ? 'var(--gold)' : 'var(--cream-4)'; }}
           style={{
