@@ -57,3 +57,45 @@ Private actions (create post, submit comment) are visible to all users. Clicking
 
 ### Toast Actions
 The toast system supports an optional `action: { label: string, onClick: () => void }` field. The toast component renders an action button when present and invokes the callback on click. The toast component has no knowledge of auth or routing — callers provide the behavior.
+
+## Frontend Architecture
+
+These conventions are load-bearing — preserve them in future work.
+
+### API Domain Slices
+Network calls live in `frontend/lib/api/<slice>.ts`, one file per backend domain:
+- `http.ts` — internal: `req<T>()`, `getToken/storeToken/removeToken`, base URL. Not imported by components.
+- `auth.ts` — `login`, `register`, `logout`, `isLoggedIn`
+- `posts.ts` — `list`, `get`, `create`, `remove` + `PostPublic`
+- `comments.ts` — `list`, `create`, `reply`, `remove` + `CommentPublic`
+- `users.ts` — `me`, `getProfile`, `updateBio` + `UserPublic`, `ProfilePublic`
+- `ai.ts` — `assistPost` + `AiAssistResponse`
+
+**Conventions:**
+- Components import per-slice: `import * as posts from '@/lib/api/posts'`.
+- When the slice name shadows a local variable (e.g. `const [posts, setPosts] = useState(...)`), alias the import: `import * as postsApi from '@/lib/api/posts'`.
+- `delete` is a JS reserved word — name the deletion function `remove`.
+- Adding a new backend domain means a new slice file, not appending to an existing one. There is no aggregating `lib/api.ts`.
+
+### Auth Store (Single-Owner Modal)
+`frontend/lib/auth-store.ts` is the only owner of auth state, including the auth modal's open/closed state. Components must not hold their own `authOpen` state — they call `authStore.openModal()` / `authStore.closeModal()`.
+
+`AppShell.tsx` is the **sole render site** for `<AuthModal>`. Pages and feature components do not mount their own modal.
+
+### Hooks (Concentrated Complexity)
+- `useAuth()` — returns `{ user, token, modalOpen, ready, isLoggedIn }`. Replaces the init+subscribe+cleanup boilerplate that used to be copied across components. **Always** use this hook to read auth state in client components.
+- `useField(initial, validate?)` — form field with blur-based validation. Returns `{ value, error, isValid, onChange, onBlur, reset }`, spreadable directly onto an `<input>`/`<textarea>`. Use `validators` (`required`, `minLength`, `maxLength`, `username`, `email`, `compose`) for common rules.
+- `useAsyncData(fetcher, deps)` — async fetch with `{ status, data, error, reload }`. Use for read-only loads where retry/reload matters.
+
+If you find yourself writing `useEffect(() => authStore.subscribe(...))` or hand-rolling touched/error state, stop — use the hook.
+
+### React Context for Recursive / Deeply-Shared Props
+When the same handful of props would be drilled through a recursive or deeply-nested tree, lift them into a context defined alongside the component. Existing example: `app/post/[id]/components/CommentContext.tsx` carries `replyingTo`, `currentUserId`, `onReply`, `onSubmitReply`, `onDelete` so `CommentNode` can recurse without prop drilling.
+
+Do not reach for context prematurely — only when prop drilling crosses ≥3 levels or a recursive boundary.
+
+### Optimistic Updates with Rollback
+Mutations that affect a visible list (comments, replies) apply optimistically with a temporary `optimistic-<n>` id, then either swap in the server response or **roll back and toast on failure**. Silent failures are not acceptable. See `CommentSection.tsx` for the canonical pattern.
+
+### Component Splits
+Client components above ~200 lines should be split by concern, colocated under a `components/` subdirectory of their route. Existing example: `app/post/[id]/components/{CommentContext,CommentNode,CommentSection}.tsx` extracted from a 335-line `PostDetailClient`.
