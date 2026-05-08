@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import * as auth from './api/auth';
 import * as users from './api/users';
+import { setUnauthorizedHandler } from './api/http';
+import toast from './toast';
 
 const STORE_KEY = 'tga_user';
 
@@ -35,12 +37,12 @@ const store = {
     this.token = auth.getToken();
     this.user  = loadUser();
     if (this.token) {
-      users.me().then(me => {
+      users.meSilent().then(me => {
         if (!store.user) return;
         store.user = { ...store.user, username: me.username };
         saveUser(store.user);
         notify();
-      }).catch(() => {});
+      }).catch(() => { store.logout(); });
     }
   },
 
@@ -65,12 +67,14 @@ const store = {
     return store.user;
   },
 
-  async register(username: string, email: string, password: string): Promise<AuthUser> {
-    const data = await auth.register(username, email, password);
-    store.token = data.access_token;
+  async register(username: string, email: string, password: string): Promise<auth.SignupResult> {
+    const result = await auth.register(username, email, password);
+    if (result.kind === 'pending_confirmation') return result;
+
+    store.token = result.token.access_token;
     let user: AuthUser;
     try {
-      const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+      const payload = JSON.parse(atob(result.token.access_token.split('.')[1]));
       user = { user_id: payload.sub, email: payload.email ?? email, username };
     } catch (_) {
       user = { user_id: '', email, username };
@@ -78,7 +82,7 @@ const store = {
     store.user = user;
     saveUser(store.user);
     notify();
-    return store.user;
+    return result;
   },
 
   logout() {
@@ -111,5 +115,17 @@ export function useAuth() {
 
   return { user, token, modalOpen, ready, isLoggedIn: !!token && !!user };
 }
+
+// Centralised 401 policy: see CONTEXT.md → Session Expiry.
+// Fires for any authenticated request that returns 401, except calls that opt
+// out via skipAuthHandler (login attempts, boot-time meSilent).
+setUnauthorizedHandler(() => {
+  if (!store.token && !store.user) return;
+  store.logout();
+  toast.error('Your session expired. Please sign in again.', {
+    label: 'Sign in',
+    onClick: () => store.openModal(),
+  });
+});
 
 export default store;

@@ -8,6 +8,10 @@ export async function me(): Promise<UserPublic> {
   return req<UserPublic>('GET', '/users/me');
 }
 
+export async function meSilent(): Promise<UserPublic> {
+  return req<UserPublic>('GET', '/users/me', null, { skipAuthHandler: true });
+}
+
 export async function getProfile(username: string): Promise<ProfilePublic> {
   return req<ProfilePublic>('GET', `/users/${encodeURIComponent(username)}`);
 }
