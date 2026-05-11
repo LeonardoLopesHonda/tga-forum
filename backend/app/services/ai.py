@@ -23,8 +23,8 @@ SYSTEM_PROMPT = """
     - Set "content" to null.
 
     3. If both title and content are provided:
-    - Improve and refine the content.
-    - Set "title" to null.
+    - Improve and refine BOTH the title and the content.
+    - Return both fields filled with the refined versions.
 
     Response format:
     Always return valid JSON exactly in this structure:
