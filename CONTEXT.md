@@ -110,3 +110,12 @@ Ordering is `(created_at DESC, post_id DESC)`. The two-column cursor ensures pos
 Implementation idiom (backend): fetch `limit + 1` rows; if we got more than `limit`, return the first `limit` and build `next_cursor` from the last returned item; otherwise return everything and set `next_cursor = null`. Saves the extra "is there more" round trip.
 
 Frontend UX is a **Load more** button — explicit user action, no infinite scroll. On failure the toast surfaces the error and the cursor is **not** advanced, so the user can retry without losing pagination state. Initial loads render `Shimmer` skeletons; subsequent loads only affect the button state to avoid reflowing the list.
+
+### AI Assist on /create
+`POST /ai/post-assist` accepts `{ title?, content? }` and returns `{ title?, content? }`. Behavior depends on which fields were sent:
+
+- **Title only** → backend generates content. Frontend auto-applies it.
+- **Content only** → backend suggests a title. Frontend auto-applies it.
+- **Both** → backend refines both fields. Frontend renders each refinement as a **`SuggestionChip`** with Accept/Dismiss, never auto-overwriting the user's text. A chip is suppressed when the model returns the same string the user already had — unchanged fields don't pester.
+
+The "auto-apply on empty field / chip on filled field" split is the contract: the user only sees a decision UI when their own work would be overwritten. `SuggestionChip` lives inline in `CreatePostClient.tsx` — colocated, not yet reused. Lift it to `app/components/` if a second flow needs the same pattern.
