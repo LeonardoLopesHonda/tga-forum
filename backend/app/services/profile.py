@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from models.user import UserPatch
 from services.post import get_recent_posts_by_user
@@ -6,17 +7,21 @@ from db.database import Profile
 from uuid import UUID
 
 def populate_profile(id: str, username: str, db: Session):
-    profile = Profile(
-        id=UUID(str(id)),
-        username=username
-    )
-    db.add(profile)
-    db.commit()
+    try:    
+        profile = Profile(
+            id=UUID(str(id)),
+            username=username
+        )
+        db.add(profile)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        existing = db.query(Profile).filter(Profile.id == UUID(str(id))).first()
+        if existing is None:
+            raise
 
 def get_user_by_id(user_id: UUID, db: Session) -> Profile:
     user = db.query(Profile).filter(Profile.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
     return user
 
 def get_user_by_username(username: str, db: Session) -> Profile:

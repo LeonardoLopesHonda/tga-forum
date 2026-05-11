@@ -1,7 +1,8 @@
-from services.profile import get_user_by_id, get_user_by_username, get_user_profile_with_posts, update_profile
+from sqlalchemy.exc import IntegrityError
+from services.profile import get_user_by_id, get_user_by_username, get_user_profile_with_posts, populate_profile, update_profile
+from models.user import UserPatch, UserProfile, UserPublic
 from fastapi import APIRouter, Depends, HTTPException
 from services.comment import get_comments_by_user
-from models.user import UserPatch, UserProfile, UserPublic
 from services.post import get_posts_by_user
 from services.auth import get_current_user
 from models.comment import CommentPublic
@@ -27,6 +28,14 @@ def get_user_comments(user_id: str, current_user: TokenData = Depends(get_curren
 @router.get("/users/me", response_model=UserPublic)
 def get_me(current_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)):
     user = get_user_by_id(current_user.user_id, db)
+    if user is None:
+        if not current_user.username:
+            raise HTTPException(status_code=422, detail="username missing from user_metadata")
+        try:
+            populate_profile(current_user.user_id, current_user.username, db)
+        except IntegrityError:
+            raise HTTPException(status_code=409, detail="username taken")
+        user = get_user_by_id(current_user.user_id, db)
     return {"user_id": user.id, "username": user.username, "bio": user.bio}
 
 @router.get("/users/{username}", response_model=UserProfile)
