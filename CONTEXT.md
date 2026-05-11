@@ -84,7 +84,7 @@ Network calls live in `frontend/lib/api/<slice>.ts`, one file per backend domain
 
 ### Hooks (Concentrated Complexity)
 - `useAuth()` — returns `{ user, token, modalOpen, ready, isLoggedIn }`. Replaces the init+subscribe+cleanup boilerplate that used to be copied across components. **Always** use this hook to read auth state in client components.
-- `useField(initial, validate?)` — form field with blur-based validation. Returns `{ value, error, isValid, onChange, onBlur, reset }`, spreadable directly onto an `<input>`/`<textarea>`. Use `validators` (`required`, `minLength`, `maxLength`, `username`, `email`, `compose`) for common rules.
+- `useField(initial, validate?)` — form field with blur-based validation. Returns `{ value, error, isValid, onChange, onBlur, reset, props }`. Spread the **`.props`** subset onto an `<input>`/`<textarea>` — it contains only DOM-safe attributes (`value`, `onChange`, `onBlur`). Spreading the whole object leaks `isValid`/`error`/`reset` as DOM attributes and trips React warnings. Use `validators` (`required`, `minLength`, `maxLength`, `username`, `email`, `compose`) for common rules.
 - `useAsyncData(fetcher, deps)` — async fetch with `{ status, data, error, reload }`. Use for read-only loads where retry/reload matters.
 
 If you find yourself writing `useEffect(() => authStore.subscribe(...))` or hand-rolling touched/error state, stop — use the hook.
