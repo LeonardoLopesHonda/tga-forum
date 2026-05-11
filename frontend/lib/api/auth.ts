@@ -15,8 +15,13 @@ export async function login(email: string, password: string): Promise<Token> {
 }
 
 export async function register(username: string, email: string, password: string): Promise<SignupResult> {
+  const email_redirect_to = typeof window !== 'undefined'
+    ? `${window.location.origin}/auth/callback`
+    : undefined;
   const res = await req<Req202<Token | { pending_confirmation: true }>>(
-    'POST', '/auth/signup', { username, email, password }, { status202: true },
+    'POST', '/auth/signup',
+    { username, email, password, email_redirect_to },
+    { status202: true },
   );
   if (res.status === 202) return { kind: 'pending_confirmation' };
   const token = res.data as Token;
