@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import * as users from '@/lib/api/users';
-import type { ProfilePublic } from '@/lib/api/users';
+import type { UserPublic } from '@/lib/api/users';
+import type { Cursor, PostPublic } from '@/lib/api/posts';
 import { useAuth } from '@/lib/auth-store';
 import { useField, validators } from '@/lib/use-field';
+import toast from '@/lib/toast';
 import Avatar, { deriveUser } from '@/app/components/Avatar';
 import PostCard from '@/app/components/PostCard';
 import Shimmer from '@/app/components/Shimmer';
@@ -12,7 +14,11 @@ import Shimmer from '@/app/components/Shimmer';
 const BIO_MAX = 160;
 
 export default function ProfileClient({ username }: { username: string }) {
-  const [profile, setProfile]   = useState<ProfilePublic | null>(null);
+  const [profile, setProfile]   = useState<UserPublic | null>(null);
+  const [posts, setPosts]       = useState<PostPublic[]>([]);
+  const [cursor, setCursor]     = useState<Cursor | null>(null);
+  const [postsReady, setPostsReady]     = useState(false);
+  const [loadingMore, setLoadingMore]   = useState(false);
   const { user }                = useAuth();
   const [notFound, setNotFound] = useState(false);
   const [editing, setEditing]   = useState(false);
@@ -21,12 +27,44 @@ export default function ProfileClient({ username }: { username: string }) {
   const bio = useField('', validators.maxLength(BIO_MAX, 'Bio'));
 
   useEffect(() => {
+    let cancelled = false;
+    setProfile(null);
+    setPosts([]);
+    setCursor(null);
+    setPostsReady(false);
+    setNotFound(false);
+
     users.getProfile(username)
-      .then(setProfile)
+      .then(p => { if (!cancelled) setProfile(p); })
       .catch((e: Error & { status?: number }) => {
-        if (e.status === 404) setNotFound(true);
+        if (!cancelled && e.status === 404) setNotFound(true);
       });
+
+    users.getProfilePosts(username)
+      .then(page => {
+        if (cancelled) return;
+        setPosts(page.items);
+        setCursor(page.next_cursor);
+        setPostsReady(true);
+      })
+      .catch(() => { if (!cancelled) setPostsReady(true); });
+
+    return () => { cancelled = true; };
   }, [username]);
+
+  const handleLoadMore = async () => {
+    if (!cursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await users.getProfilePosts(username, { cursor });
+      setPosts(prev => [...prev, ...page.items]);
+      setCursor(page.next_cursor);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not load more posts.');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const isOwner = user?.username === username;
 
@@ -181,13 +219,34 @@ export default function ProfileClient({ username }: { username: string }) {
         Posts
       </h2>
 
-      {profile.posts.length === 0 ? (
+      {!postsReady ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <Shimmer height={70} />
+          <Shimmer height={70} />
+        </div>
+      ) : posts.length === 0 ? (
         <p style={{ fontSize: 14, color: 'var(--cream-4)', fontStyle: 'italic' }}>No posts yet.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {profile.posts.map(post => (
+          {posts.map(post => (
             <PostCard key={post.post_id} post={post} />
           ))}
+          {cursor && (
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              style={{
+                marginTop: 12, alignSelf: 'center',
+                background: 'transparent', color: 'var(--cream-2)',
+                border: '1px solid rgba(212,168,67,0.25)', borderRadius: 6,
+                padding: '9px 20px', fontFamily: 'var(--font-body)', fontSize: 13,
+                letterSpacing: '0.04em', cursor: loadingMore ? 'default' : 'pointer',
+                opacity: loadingMore ? 0.5 : 1, transition: 'all 0.18s var(--ease)',
+              }}
+            >
+              {loadingMore ? 'Loading…' : 'Load more'}
+            </button>
+          )}
         </div>
       )}
     </div>

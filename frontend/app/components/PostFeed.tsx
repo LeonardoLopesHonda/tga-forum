@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import * as postsApi from '@/lib/api/posts';
-import type { PostPublic } from '@/lib/api/posts';
+import type { Cursor, PostPublic } from '@/lib/api/posts';
 import toast from '@/lib/toast';
 import PostCard from './PostCard';
 import Shimmer from './Shimmer';
@@ -20,23 +20,44 @@ function timeAgo(iso: string): string {
 }
 
 export default function PostFeed() {
-  const [posts, setPosts]     = useState<PostPublic[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts]             = useState<PostPublic[]>([]);
+  const [cursor, setCursor]           = useState<Cursor | null>(null);
+  const [loading, setLoading]         = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     postsApi.list()
-      .then(data => { if (!cancelled) { setPosts(data); setLoading(false); } })
+      .then(page => {
+        if (cancelled) return;
+        setPosts(page.items);
+        setCursor(page.next_cursor);
+        setLoading(false);
+      })
       .catch((e: unknown) => {
-        if (!cancelled) {
-          setPosts([]);
-          setLoading(false);
-          toast.error(e instanceof Error ? e.message : 'Could not load posts. The server may be waking up — try again in a moment.');
-        }
+        if (cancelled) return;
+        setPosts([]);
+        setCursor(null);
+        setLoading(false);
+        toast.error(e instanceof Error ? e.message : 'Could not load posts. The server may be waking up — try again in a moment.');
       });
     return () => { cancelled = true; };
   }, []);
+
+  const handleLoadMore = async () => {
+    if (!cursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await postsApi.list({ cursor });
+      setPosts(prev => [...prev, ...page.items]);
+      setCursor(page.next_cursor);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not load more posts.');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   return (
     <section id="posts" style={{ maxWidth: 800, margin: '0 auto', padding: '64px 24px 0' }}>
@@ -54,10 +75,34 @@ export default function PostFeed() {
 
       {!loading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 80 }}>
-          {posts.length === 0
-            ? <p style={{ color: 'var(--cream-3)', fontSize: 14, padding: '32px 0' }}>No posts yet. Be the first.</p>
-            : posts.map(post => <PostCard key={post.post_id} post={{ ...post, time: post.created_at ? timeAgo(post.created_at) : undefined }} />)
-          }
+          {posts.length === 0 ? (
+            <p style={{ color: 'var(--cream-3)', fontSize: 14, padding: '32px 0' }}>No posts yet. Be the first.</p>
+          ) : (
+            <>
+              {posts.map(post => (
+                <PostCard
+                  key={post.post_id}
+                  post={{ ...post, time: post.created_at ? timeAgo(post.created_at) : undefined }}
+                />
+              ))}
+              {cursor && (
+                <button
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  style={{
+                    marginTop: 18, alignSelf: 'center',
+                    background: 'transparent', color: 'var(--cream-2)',
+                    border: '1px solid rgba(212,168,67,0.25)', borderRadius: 6,
+                    padding: '10px 22px', fontFamily: 'var(--font-body)', fontSize: 13,
+                    letterSpacing: '0.04em', cursor: loadingMore ? 'default' : 'pointer',
+                    opacity: loadingMore ? 0.5 : 1, transition: 'all 0.18s var(--ease)',
+                  }}
+                >
+                  {loadingMore ? 'Loading…' : 'Load more'}
+                </button>
+              )}
+            </>
+          )}
         </div>
       )}
     </section>
