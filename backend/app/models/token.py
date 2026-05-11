@@ -1,3 +1,4 @@
+from typing import Literal
 from uuid import UUID
 from pydantic import BaseModel
 
@@ -9,3 +10,6 @@ class TokenData(BaseModel):
     user_id: UUID
     username: str | None = None
     email: str | None = None
+
+class PendingConfirmation(BaseModel):
+    pending_confirmation: Literal[True] = True

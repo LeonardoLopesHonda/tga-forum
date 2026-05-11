@@ -1,3 +1,4 @@
+from fastapi.responses import JSONResponse
 from services.profile import populate_profile
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
@@ -5,7 +6,7 @@ from supabase_auth.errors import AuthApiError
 from sqlalchemy.orm import Session
 from core.supabase import supabase
 from db.database import get_db
-from models.token import Token
+from models.token import PendingConfirmation, Token
 from pydantic import BaseModel
 import re
 
@@ -18,7 +19,7 @@ class SignUpBody(BaseModel):
     password: str
     username: str
 
-@router.post("/auth/signup", response_model=Token)
+@router.post("/auth/signup", response_model=Token, responses={202: {"model": PendingConfirmation}})
 def signup(body: SignUpBody, db: Session = Depends(get_db)):
     if not USERNAME_RE.match(body.username):
         raise HTTPException(status_code=400, detail="Username must be 1–20 characters and contain only letters, numbers, underscores, or hyphens.")
@@ -31,7 +32,7 @@ def signup(body: SignUpBody, db: Session = Depends(get_db)):
     except AuthApiError as e:
         raise HTTPException(status_code=400, detail=str(e))
     if response.session is None:
-        raise HTTPException(status_code=400, detail="Email confirmation required — check your inbox.")
+        return JSONResponse(status_code=202, content=PendingConfirmation().model_dump())
     populate_profile(id=response.user.id, username=body.username, db=db)
     return Token(access_token=response.session.access_token, token_type="bearer")
 
