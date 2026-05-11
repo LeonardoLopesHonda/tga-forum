@@ -8,15 +8,18 @@ export function useField(initial: string, validate?: Validator) {
   const [value, setValue]     = useState(initial);
   const [touched, setTouched] = useState(false);
 
-  const error = touched && validate ? (validate(value) ?? '') : '';
+  const error    = touched && validate ? (validate(value) ?? '') : '';
+  const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setValue(e.target.value);
+  const onBlur   = () => setTouched(true);
 
   return {
     value,
     error,
     isValid: !validate || !validate(value),
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setValue(e.target.value),
-    onBlur:   () => setTouched(true),
-    reset:    (v = initial) => { setValue(v); setTouched(false); },
+    onChange,
+    onBlur,
+    reset: (v = initial) => { setValue(v); setTouched(false); },
+    props: { value, onChange, onBlur },
   };
 }
 

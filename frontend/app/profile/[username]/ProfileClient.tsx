@@ -101,7 +101,7 @@ export default function ProfileClient({ username }: { username: string }) {
         {editing ? (
           <div>
             <textarea
-              {...bio}
+              {...bio.props}
               autoFocus
               rows={3}
               style={{

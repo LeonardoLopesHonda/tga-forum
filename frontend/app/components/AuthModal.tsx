@@ -133,18 +133,18 @@ export default function AuthModal({ open, onClose }: Props) {
               {isReg && (
                 <div>
                   <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 5 }}>Username</label>
-                  <input {...username} onKeyDown={e => e.key === 'Enter' && handleSubmit()} type="text" placeholder="your_handle" style={inputStyle} />
+                  <input {...username.props} onKeyDown={e => e.key === 'Enter' && handleSubmit()} type="text" placeholder="your_handle" style={inputStyle} />
                   {username.error && <p style={{ fontSize: 11, color: '#c07070', marginTop: 4 }}>{username.error}</p>}
                 </div>
               )}
               <div>
                 <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 5 }}>Email</label>
-                <input {...email} onKeyDown={e => e.key === 'Enter' && handleSubmit()} type="email" placeholder="you@example.com" style={inputStyle} />
+                <input {...email.props} onKeyDown={e => e.key === 'Enter' && handleSubmit()} type="email" placeholder="you@example.com" style={inputStyle} />
                 {email.error && <p style={{ fontSize: 11, color: '#c07070', marginTop: 4 }}>{email.error}</p>}
               </div>
               <div>
                 <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 5 }}>Password</label>
-                <input {...password} onKeyDown={e => e.key === 'Enter' && handleSubmit()} type="password" placeholder="••••••••" style={inputStyle} />
+                <input {...password.props} onKeyDown={e => e.key === 'Enter' && handleSubmit()} type="password" placeholder="••••••••" style={inputStyle} />
                 {password.error && <p style={{ fontSize: 11, color: '#c07070', marginTop: 4 }}>{password.error}</p>}
               </div>
             </div>

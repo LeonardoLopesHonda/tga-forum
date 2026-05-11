@@ -141,7 +141,7 @@ export default function CreatePostClient() {
       <div style={{ marginBottom: 22 }}>
         <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 8, letterSpacing: '0.04em' }}>Title</label>
         <input
-          {...title}
+          {...title.props}
           placeholder="A specific, interesting question or statement" maxLength={160}
           onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(212,168,67,0.50)'; }}
           style={{
@@ -199,7 +199,7 @@ export default function CreatePostClient() {
           </button>
         </div>
         <textarea
-          {...content}
+          {...content.props}
           placeholder="Share your thinking. Be specific. Give people something to respond to."
           onFocus={e => { (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(212,168,67,0.50)'; }}
           style={{
