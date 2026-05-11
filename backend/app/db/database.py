@@ -44,7 +44,7 @@ class Profile(Base):
     __tablename__ = "profiles"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
-    username: Mapped[str] = mapped_column(String(20), nullable=False)
+    username: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
     bio: Mapped[str | None] = mapped_column(String(160), nullable=True)
 
 class PostWithUsername(Base):
