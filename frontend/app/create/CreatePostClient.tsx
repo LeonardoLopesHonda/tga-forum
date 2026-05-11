@@ -26,6 +26,8 @@ export default function CreatePostClient() {
   const [aiLoading, setAiLoading]   = useState(false);
   const [serverError, setServerError] = useState('');
   const [done, setDone]             = useState(false);
+  const [suggestedTitle,   setSuggestedTitle]   = useState<string | null>(null);
+  const [suggestedContent, setSuggestedContent] = useState<string | null>(null);
   const router = useRouter();
 
   const canSubmit = title.isValid && content.isValid && !submitting;
@@ -68,17 +70,33 @@ export default function CreatePostClient() {
   );
 
   const handleAiAssist = async () => {
-    if (aiLoading || (!title.value.trim() && !content.value.trim())) return;
+    const titleVal   = title.value.trim();
+    const contentVal = content.value.trim();
+    if (aiLoading || (!titleVal && !contentVal)) return;
+    setSuggestedTitle(null); setSuggestedContent(null);
     setAiLoading(true);
     try {
-      const result = await ai.assistPost(title.value.trim() || undefined, content.value.trim() || undefined);
-      if (result.title)   title.reset(result.title);
-      if (result.content) content.reset(result.content);
+      const result = await ai.assistPost(titleVal || undefined, contentVal || undefined);
+      const bothSent = !!titleVal && !!contentVal;
+      // Single-field send: auto-apply the generated field (the user's field was empty).
+      // Both-fields send: show each refinement as a chip the user can accept or dismiss.
+      if (bothSent) {
+        if (result.title   && result.title   !== titleVal)   setSuggestedTitle(result.title);
+        if (result.content && result.content !== contentVal) setSuggestedContent(result.content);
+      } else {
+        if (result.title)   title.reset(result.title);
+        if (result.content) content.reset(result.content);
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'AI assist failed. Try again.';
       toast.error(msg);
     } finally { setAiLoading(false); }
   };
+
+  const acceptTitle   = () => { if (suggestedTitle)   { title.reset(suggestedTitle);     setSuggestedTitle(null);   } };
+  const dismissTitle  = () => setSuggestedTitle(null);
+  const acceptContent = () => { if (suggestedContent) { content.reset(suggestedContent); setSuggestedContent(null); } };
+  const dismissContent= () => setSuggestedContent(null);
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -158,6 +176,14 @@ export default function CreatePostClient() {
             {title.value.length}/160
           </span>
         </div>
+        {suggestedTitle && (
+          <SuggestionChip
+            label="Suggested title"
+            text={suggestedTitle}
+            onAccept={acceptTitle}
+            onDismiss={dismissTitle}
+          />
+        )}
       </div>
 
       {/* Content */}
@@ -210,6 +236,15 @@ export default function CreatePostClient() {
           }}
         />
         {content.error && <p style={{ fontSize: 11, color: '#c07070', marginTop: 4 }}>{content.error}</p>}
+        {suggestedContent && (
+          <SuggestionChip
+            label="Suggested content"
+            text={suggestedContent}
+            onAccept={acceptContent}
+            onDismiss={dismissContent}
+            multiline
+          />
+        )}
       </div>
 
       {serverError && <p style={{ fontSize: 13, color: '#c07070', marginBottom: 16, lineHeight: 1.5 }}>{serverError}</p>}
@@ -232,6 +267,50 @@ export default function CreatePostClient() {
             {submitting ? 'Posting…' : 'Post discussion'}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+type ChipProps = {
+  label: string;
+  text: string;
+  onAccept: () => void;
+  onDismiss: () => void;
+  multiline?: boolean;
+};
+
+function SuggestionChip({ label, text, onAccept, onDismiss, multiline }: ChipProps) {
+  return (
+    <div style={{
+      marginTop: 10,
+      background: 'rgba(100,120,255,0.06)',
+      border: '1px solid rgba(140,160,255,0.30)',
+      borderRadius: 6, padding: '10px 12px',
+      display: 'flex', flexDirection: 'column', gap: 8,
+    }}>
+      <p style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(180,200,255,0.75)', margin: 0 }}>
+        {label}
+      </p>
+      <p style={{
+        fontSize: 13, color: 'var(--cream-2)', lineHeight: 1.55, margin: 0,
+        whiteSpace: multiline ? 'pre-wrap' : 'normal',
+        maxHeight: multiline ? 180 : undefined,
+        overflowY: multiline ? 'auto' : undefined,
+      }}>
+        {text}
+      </p>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <button onClick={onDismiss} style={{
+          background: 'transparent', border: '1px solid rgba(212,168,67,0.20)',
+          borderRadius: 5, padding: '5px 12px', color: 'var(--cream-3)',
+          fontSize: 12, fontFamily: 'var(--font-body)', cursor: 'pointer',
+        }}>Dismiss</button>
+        <button onClick={onAccept} style={{
+          background: 'rgba(140,160,255,0.85)', border: 'none',
+          borderRadius: 5, padding: '5px 14px', color: '#05040A',
+          fontSize: 12, fontFamily: 'var(--font-body)', fontWeight: 600, cursor: 'pointer',
+        }}>Accept</button>
       </div>
     </div>
   );
