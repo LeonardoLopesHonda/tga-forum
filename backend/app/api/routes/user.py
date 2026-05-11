@@ -1,14 +1,15 @@
+from datetime import datetime
 from sqlalchemy.exc import IntegrityError
-from services.profile import get_user_by_id, get_user_by_username, get_user_profile_with_posts, populate_profile, update_profile
-from models.user import UserPatch, UserProfile, UserPublic
-from fastapi import APIRouter, Depends, HTTPException
+from services.profile import get_user_by_id, get_user_by_username, populate_profile, update_profile
+from models.user import UserPatch, UserPublic
+from fastapi import APIRouter, Depends, HTTPException, Query
 from services.comment import get_comments_by_user
-from services.post import get_posts_by_user
+from services.post import get_posts_by_user, list_user_posts_page
 from services.auth import get_current_user
 from models.comment import CommentPublic
 from sqlalchemy.orm import Session
 from models.token import TokenData
-from models.post import PostPublic
+from models.post import Cursor, PostPage, PostPublic
 from db.database import get_db
 
 router = APIRouter()
@@ -38,9 +39,28 @@ def get_me(current_user: TokenData = Depends(get_current_user), db: Session = De
         user = get_user_by_id(current_user.user_id, db)
     return {"user_id": user.id, "username": user.username, "bio": user.bio}
 
-@router.get("/users/{username}", response_model=UserProfile)
+@router.get("/users/{username}", response_model=UserPublic)
 def get_user_profile(username: str, db: Session = Depends(get_db)):
-    return get_user_profile_with_posts(username, db)
+    user = get_user_by_username(username, db)
+    return {"user_id": user.id, "username": user.username, "bio": user.bio}
+
+@router.get("/users/{username}/posts", response_model=PostPage)
+def get_user_profile_posts(
+    username: str,
+    limit: int = Query(10, ge=1, le=50),
+    before: datetime | None = None,
+    before_id: int | None = None,
+    db: Session = Depends(get_db),
+):
+    user = get_user_by_username(username, db)
+    rows = list_user_posts_page(db, user.id, limit, before, before_id)
+    has_more = len(rows) > limit
+    items = rows[:limit] if has_more else rows
+    next_cursor = (
+        Cursor(before=items[-1].created_at, before_id=items[-1].post_id)
+        if has_more else None
+    )
+    return PostPage(items=items, next_cursor=next_cursor)
 
 @router.patch("/users/{username}", response_model=UserPublic)
 def update_user_profile(body: UserPatch, username: str, current_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)):

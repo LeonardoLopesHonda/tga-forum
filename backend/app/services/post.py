@@ -1,13 +1,9 @@
+from datetime import datetime
 from uuid import UUID
+from sqlalchemy import tuple_
 from sqlalchemy.orm import Session
 from models.post import PostCreate, PostUpdate
 from db.database import Post, PostWithUsername
-
-def get_all_posts(db: Session):
-    posts = db.query(PostWithUsername).order_by(PostWithUsername.created_at.desc()).all()
-    if not posts:
-        return []
-    return posts
 
 def get_post_by_id(db: Session, post_id: int):
     post = db.query(PostWithUsername).filter(PostWithUsername.post_id == post_id).first()
@@ -17,12 +13,6 @@ def get_post_by_id(db: Session, post_id: int):
 
 def get_posts_by_user(db: Session, user_id: UUID):
     posts = db.query(PostWithUsername).filter(PostWithUsername.user_id == user_id).all()
-    if not posts:
-        return []
-    return posts
-
-def get_recent_posts_by_user(db: Session, user_id: UUID):
-    posts = db.query(PostWithUsername).filter(PostWithUsername.user_id == user_id).order_by(PostWithUsername.created_at.desc()).all()
     if not posts:
         return []
     return posts
@@ -50,3 +40,23 @@ def update_post(db: Session, body: PostUpdate, post: Post):
     db.commit()
     db.refresh(post)
     return post
+
+def _apply_cursor(query, before: datetime | None, before_id: int | None):
+    if before is not None and before_id is not None:
+        query = query.filter(
+            tuple_(PostWithUsername.created_at, PostWithUsername.post_id) <
+            tuple_(before, before_id)
+        )
+    return query.order_by(
+        PostWithUsername.created_at.desc(),
+        PostWithUsername.post_id.desc(),
+    )
+
+def list_posts_page(db: Session, limit: int, before: datetime | None, before_id: int | None):
+    query = _apply_cursor(db.query(PostWithUsername), before, before_id)
+    return query.limit(limit + 1).all()
+
+def list_user_posts_page(db: Session, user_id: UUID, limit: int, before: datetime | None, before_id: int | None):
+    query = db.query(PostWithUsername).filter(PostWithUsername.user_id == user_id)
+    query = _apply_cursor(query, before, before_id)
+    return query.limit(limit + 1).all()

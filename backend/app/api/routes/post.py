@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from models.token import TokenData
 from services.auth import get_current_user
 from db.database import get_db
-from models.post import PostPublic, PostCreate, PostUpdate
-from services.post import create_post, delete_post, get_all_posts, get_post_by_id, update_post
+from models.post import Cursor, PostCreate, PostPage, PostPublic, PostUpdate
+from services.post import create_post, delete_post, get_post_by_id, list_posts_page, update_post
 
 router = APIRouter()
 
@@ -35,9 +36,21 @@ def delete(post_id: int, current_user: TokenData = Depends(get_current_user), db
     delete_post(db, post)
     return { "message": "Post deleted" }
 
-@router.get("/posts", response_model=list[PostPublic])
-def get_all(db:Session = Depends(get_db)) -> list[PostPublic]:
-    return get_all_posts(db)
+@router.get("/posts", response_model=PostPage)
+def get_all(
+    limit: int = Query(10, ge=1, le=50),
+    before: datetime | None = None,
+    before_id: int | None = None,
+    db: Session = Depends(get_db),
+) -> PostPage:
+    rows = list_posts_page(db, limit, before, before_id)
+    has_more = len(rows) > limit
+    items = rows[:limit] if has_more else rows
+    next_cursor = (
+        Cursor(before=items[-1].created_at, before_id=items[-1].post_id)
+        if has_more else None
+    )
+    return PostPage(items=items, next_cursor=next_cursor)
 
 @router.get("/posts/{post_id}", response_model=PostPublic)
 def get(post_id: int, db:Session = Depends(get_db)) -> PostPublic:
