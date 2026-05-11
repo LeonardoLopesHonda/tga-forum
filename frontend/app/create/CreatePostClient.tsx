@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as posts from '@/lib/api/posts';
 import * as ai from '@/lib/api/ai';
@@ -30,31 +30,15 @@ export default function CreatePostClient() {
 
   const canSubmit = title.isValid && content.isValid && !submitting;
 
-  if (!ready) return null;
+  useEffect(() => {
+    if (!ready) return;
+    if (!user) {
+      router.replace('/');
+      authStore.openModal();
+    }
+  }, [ready, user, router]);
 
-  if (!user) return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: '120px 24px', textAlign: 'center' }}>
-      <p style={{ fontFamily: 'var(--font-body)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(212,168,67,0.6)', marginBottom: 14 }}>
-        Members only
-      </p>
-      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 400, color: 'var(--cream)', marginBottom: 14, lineHeight: 1.2 }}>
-        Sign in to post a discussion.
-      </h2>
-      <p style={{ fontSize: 15, color: 'var(--cream-2)', marginBottom: 32, lineHeight: 1.65 }}>
-        Create a free account to share your ideas with the community.
-      </p>
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-        <button onClick={() => authStore.openModal()} style={{
-          background: 'var(--gold)', color: '#05040A', border: 'none', borderRadius: 6,
-          padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-        }}>Sign in / Join TGA</button>
-        <button onClick={() => router.push('/')} style={{
-          background: 'transparent', color: 'var(--cream-2)', border: '1px solid rgba(212,168,67,0.20)',
-          borderRadius: 6, padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, cursor: 'pointer',
-        }}>Back to forum</button>
-      </div>
-    </div>
-  );
+  if (!ready || !user) return null;
 
   if (done) return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '120px 24px', textAlign: 'center' }}>
