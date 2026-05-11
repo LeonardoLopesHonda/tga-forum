@@ -46,6 +46,8 @@ A label that classifies a Post by topic or purpose. A Post belongs to exactly on
 ### Email Confirmation Flow
 Supabase email confirmation is enabled. Signup does not produce a session immediately — the backend returns `202 Accepted` with `{ "pending_confirmation": true }`. The frontend modal transitions to a confirmation screen. When the user clicks the confirmation link, Supabase redirects to `/auth/callback` on the frontend, which exchanges the token for a session and calls `GET /users/me` to complete profile creation.
 
+The post-confirmation landing URL is **declared by the frontend** at signup time, not hardcoded server-side. The frontend sends `email_redirect_to: ${window.location.origin}/auth/callback` in the signup body; the backend validates the URL's origin against `ALLOWED_ORIGINS` (closing the open-redirect hole) and forwards it to Supabase as `options.email_redirect_to` (the snake_case key the Python `supabase_auth` client expects — `emailRedirectTo` is silently ignored). This keeps the backend ignorant of frontend URLs while preventing arbitrary redirects.
+
 ### Profile Self-Heal
 `GET /users/me` is idempotent with respect to profile creation. If a valid JWT is presented but no `profiles` row exists, the endpoint creates the profile using the `username` from JWT `user_metadata`. If `user_metadata.username` is absent, the endpoint returns a `422` with a clear error. This self-heals accounts where signup completed in Supabase Auth but profile creation failed.
 
