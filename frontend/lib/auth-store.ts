@@ -58,10 +58,19 @@ const store = {
 
   async login(email: string, password: string): Promise<AuthUser> {
     const data = await auth.login(email, password);
-    store.token = data.access_token;
+    return store.adoptSession(data.access_token, email);
+  },
+
+  async adoptSession(accessToken: string, emailHint?: string): Promise<AuthUser> {
+    auth.storeToken(accessToken);
+    store.token = accessToken;
     const me = await users.me();
-    const payload = JSON.parse(atob(data.access_token.split('.')[1]));
-    store.user = { user_id: payload.sub, email: payload.email ?? email, username: me.username };
+    const payload = JSON.parse(atob(accessToken.split('.')[1]));
+    store.user = {
+      user_id: payload.sub,
+      email: payload.email ?? emailHint ?? '',
+      username: me.username,
+    };
     saveUser(store.user);
     notify();
     return store.user;
