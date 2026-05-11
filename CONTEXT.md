@@ -101,3 +101,12 @@ Mutations that affect a visible list (comments, replies) apply optimistically wi
 
 ### Component Splits
 Client components above ~200 lines should be split by concern, colocated under a `components/` subdirectory of their route. Existing example: `app/post/[id]/components/{CommentContext,CommentNode,CommentSection}.tsx` extracted from a 335-line `PostDetailClient`.
+
+### Cursor Pagination
+Post list endpoints (`GET /posts`, `GET /users/{username}/posts`) speak the same cursor shape: query params `limit` (default 10, max 50) and the optional pair `(before, before_id)` representing the `(created_at, post_id)` of the last item on the previous page. Response is `{ items: PostPublic[], next_cursor: { before, before_id } | null }`.
+
+Ordering is `(created_at DESC, post_id DESC)`. The two-column cursor ensures posts inserted between page fetches never skip or duplicate across the cursor boundary — a single `created_at` cursor would break on same-timestamp inserts (seed data, bulk imports).
+
+Implementation idiom (backend): fetch `limit + 1` rows; if we got more than `limit`, return the first `limit` and build `next_cursor` from the last returned item; otherwise return everything and set `next_cursor = null`. Saves the extra "is there more" round trip.
+
+Frontend UX is a **Load more** button — explicit user action, no infinite scroll. On failure the toast surfaces the error and the cursor is **not** advanced, so the user can retry without losing pagination state. Initial loads render `Shimmer` skeletons; subsequent loads only affect the button state to avoid reflowing the list.
