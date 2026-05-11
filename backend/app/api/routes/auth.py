@@ -40,7 +40,7 @@ def signup(body: SignUpBody, db: Session = Depends(get_db)):
     try:
         options = {"data": {"username": body.username}}
         if redirect:
-            options["emailRedirectTo"] = redirect
+            options["email_redirect_to"] = redirect
         response = supabase.auth.sign_up({
             "email": body.email,
             "password": body.password,
