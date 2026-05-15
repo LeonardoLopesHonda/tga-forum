@@ -33,13 +33,12 @@ def delete_post(db: Session, post: Post):
     db.delete(post)
     db.commit()
 
-def update_post(db: Session, body: PostUpdate, post: Post):
+def update_post(db: Session, body: PostUpdate, post):
     data = body.model_dump(exclude_unset=True)
-    for field, value in data.items():
-        setattr(post, field, value)
-    db.commit()
-    db.refresh(post)
-    return post
+    if data:
+        db.query(Post).filter(Post.post_id == post.post_id).update(data)
+        db.commit()
+    return db.query(PostWithUsername).filter(PostWithUsername.post_id == post.post_id).first()
 
 def _apply_cursor(query, before: datetime | None, before_id: int | None):
     if before is not None and before_id is not None:
