@@ -30,6 +30,10 @@ export async function create(title: string, content: string): Promise<PostPublic
   return req<PostPublic>('POST', '/posts', { title, content });
 }
 
+export async function update(id: string, body: { title?: string; content?: string }): Promise<PostPublic> {
+  return req<PostPublic>('PUT', `/posts/${id}`, body);
+}
+
 export async function remove(id: string) {
   return req('DELETE', `/posts/${id}`);
 }

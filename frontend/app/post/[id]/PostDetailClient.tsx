@@ -70,14 +70,24 @@ export default function PostDetailClient({ postId }: { postId: string }) {
             gap: 6, padding: 0, fontFamily: 'var(--font-body)', transition: 'color 0.15s',
           }}>← Forum</button>
         {isOwn && (
-          <button
-            onClick={async () => { try { await posts.remove(post.post_id); } catch (_) { /* noop */ } router.push('/'); }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#c07070'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--cream-4)'; }}
-            style={{
-              background: 'none', border: 'none', color: 'var(--cream-4)', cursor: 'pointer',
-              fontSize: 12, fontFamily: 'var(--font-body)', letterSpacing: '0.04em', transition: 'color 0.15s',
-            }}>Delete post</button>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <button
+              onClick={() => router.push(`/post/${post.post_id}/edit`)}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--gold)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--cream-4)'; }}
+              style={{
+                background: 'none', border: 'none', color: 'var(--cream-4)', cursor: 'pointer',
+                fontSize: 12, fontFamily: 'var(--font-body)', letterSpacing: '0.04em', transition: 'color 0.15s',
+              }}>Edit post</button>
+            <button
+              onClick={async () => { try { await posts.remove(post.post_id); } catch (_) { /* noop */ } router.push('/'); }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#c07070'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--cream-4)'; }}
+              style={{
+                background: 'none', border: 'none', color: 'var(--cream-4)', cursor: 'pointer',
+                fontSize: 12, fontFamily: 'var(--font-body)', letterSpacing: '0.04em', transition: 'color 0.15s',
+              }}>Delete post</button>
+          </div>
         )}
       </div>
 

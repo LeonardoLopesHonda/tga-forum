@@ -17,10 +17,17 @@ const TAG_COLORS: Record<Tag, { bg: string; border: string; text: string }> = {
   Connect:     { bg: 'rgba(180,130,80,0.10)', border: 'rgba(180,130,80,0.22)', text: '#C09060' },
 };
 
-export default function CreatePostClient() {
+type CreatePostClientProps = {
+  postId?:        string;
+  initialTitle?:  string;
+  initialContent?: string;
+};
+
+export default function CreatePostClient({ postId, initialTitle, initialContent }: CreatePostClientProps = {}) {
+  const isEdit = !!postId;
   const { user, ready } = useAuth();
-  const title   = useField('', validators.minLength(5, 'Title'));
-  const content = useField('', validators.minLength(10, 'Content'));
+  const title   = useField(initialTitle   ?? '', validators.minLength(5, 'Title'));
+  const content = useField(initialContent ?? '', validators.minLength(10, 'Content'));
   const [tag, setTag]               = useState<Tag | ''>('');
   const [submitting, setSubmitting] = useState(false);
   const [aiLoading, setAiLoading]   = useState(false);
@@ -30,7 +37,10 @@ export default function CreatePostClient() {
   const [suggestedContent, setSuggestedContent] = useState<string | null>(null);
   const router = useRouter();
 
-  const canSubmit = title.isValid && content.isValid && !submitting;
+  const titleChanged   = title.value.trim()   !== (initialTitle   ?? '').trim();
+  const contentChanged = content.value.trim() !== (initialContent ?? '').trim();
+  const hasChanges     = !isEdit || titleChanged || contentChanged;
+  const canSubmit      = title.isValid && content.isValid && !submitting && hasChanges;
 
   useEffect(() => {
     if (!ready) return;
@@ -45,26 +55,30 @@ export default function CreatePostClient() {
   if (done) return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '120px 24px', textAlign: 'center' }}>
       <p style={{ fontFamily: 'var(--font-body)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(212,168,67,0.6)', marginBottom: 14 }}>
-        Posted
+        {isEdit ? 'Saved' : 'Posted'}
       </p>
       <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 400, color: 'var(--cream)', marginBottom: 14 }}>
-        It's out there now.
+        {isEdit ? 'Changes saved.' : "It's out there now."}
       </h2>
       <p style={{ fontSize: 15, color: 'var(--cream-2)', marginBottom: 32, lineHeight: 1.65 }}>
-        Your post has been added to the forum. The conversation can begin.
+        {isEdit
+          ? 'Your edits are live. Readers will see the updated version.'
+          : 'Your post has been added to the forum. The conversation can begin.'}
       </p>
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-        <button onClick={() => router.push('/')}
+        <button onClick={() => router.push(isEdit ? `/post/${postId}` : '/')}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold-light)'; }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--gold)'; }}
           style={{
             background: 'var(--gold)', color: '#05040A', border: 'none', borderRadius: 6,
             padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'background 0.18s',
-          }}>Back to forum</button>
-        <button onClick={() => { title.reset(); content.reset(); setTag(''); setDone(false); setServerError(''); }} style={{
-          background: 'transparent', color: 'var(--cream-2)', border: '1px solid rgba(212,168,67,0.20)',
-          borderRadius: 6, padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, cursor: 'pointer',
-        }}>Write another</button>
+          }}>{isEdit ? 'Back to post' : 'Back to forum'}</button>
+        {!isEdit && (
+          <button onClick={() => { title.reset(); content.reset(); setTag(''); setDone(false); setServerError(''); }} style={{
+            background: 'transparent', color: 'var(--cream-2)', border: '1px solid rgba(212,168,67,0.20)',
+            borderRadius: 6, padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, cursor: 'pointer',
+          }}>Write another</button>
+        )}
       </div>
     </div>
   );
@@ -103,7 +117,14 @@ export default function CreatePostClient() {
     setServerError(''); setSubmitting(true);
     try {
       // tag is UI-only — backend has no tag field yet
-      await posts.create(title.value.trim(), content.value.trim());
+      if (isEdit && postId) {
+        const body: { title?: string; content?: string } = {};
+        if (titleChanged)   body.title   = title.value.trim();
+        if (contentChanged) body.content = content.value.trim();
+        await posts.update(postId, body);
+      } else {
+        await posts.create(title.value.trim(), content.value.trim());
+      }
       setDone(true);
     } catch (e: unknown) {
       const msg = e instanceof Error && (e as Error & { status?: number }).status === 401
@@ -116,23 +137,23 @@ export default function CreatePostClient() {
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '100px 24px 80px' }}>
-      <button onClick={() => router.push('/')}
+      <button onClick={() => router.push(isEdit && postId ? `/post/${postId}` : '/')}
         onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--cream)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--cream-3)'; }}
         style={{
           background: 'none', border: 'none', color: 'var(--cream-3)', cursor: 'pointer',
           fontSize: 13, letterSpacing: '0.06em', marginBottom: 40, display: 'flex',
           alignItems: 'center', gap: 6, padding: 0, fontFamily: 'var(--font-body)', transition: 'color 0.15s',
-        }}>← Forum</button>
+        }}>← {isEdit ? 'Post' : 'Forum'}</button>
 
       <p style={{ fontFamily: 'var(--font-body)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(212,168,67,0.6)', marginBottom: 10 }}>
-        New discussion
+        {isEdit ? 'Edit discussion' : 'New discussion'}
       </p>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,36px)', fontWeight: 400, color: 'var(--cream)', marginBottom: 8, lineHeight: 1.2 }}>
-        What's on your mind?
+        {isEdit ? 'Refine your post.' : "What's on your mind?"}
       </h1>
       <p style={{ fontSize: 14, color: 'var(--cream-3)', marginBottom: 36 }}>
-        Posting as {user.username || user.email}
+        {isEdit ? 'Update the title or content. Changes are saved as a single revision.' : `Posting as ${user.username || user.email}`}
       </p>
 
       {/* Tag selector */}
@@ -250,9 +271,15 @@ export default function CreatePostClient() {
       {serverError && <p style={{ fontSize: 13, color: '#c07070', marginBottom: 16, lineHeight: 1.5 }}>{serverError}</p>}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, paddingTop: 8, borderTop: '1px solid rgba(212,168,67,0.08)' }}>
-        <p style={{ fontSize: 12, color: 'var(--cream-4)' }}>{canSubmit ? 'Ready to post' : 'Fill in all fields'}</p>
+        <p style={{ fontSize: 12, color: 'var(--cream-4)' }}>
+          {!title.isValid || !content.isValid
+            ? 'Fill in all fields'
+            : isEdit && !hasChanges
+              ? 'No changes to save'
+              : isEdit ? 'Ready to save' : 'Ready to post'}
+        </p>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', color: 'var(--cream-3)', cursor: 'pointer', fontSize: 14, fontFamily: 'var(--font-body)', padding: '10px 4px' }}>
+          <button onClick={() => router.push(isEdit && postId ? `/post/${postId}` : '/')} style={{ background: 'none', border: 'none', color: 'var(--cream-3)', cursor: 'pointer', fontSize: 14, fontFamily: 'var(--font-body)', padding: '10px 4px' }}>
             Cancel
           </button>
           <button onClick={handleSubmit} disabled={!canSubmit}
@@ -264,7 +291,7 @@ export default function CreatePostClient() {
               fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600,
               cursor: canSubmit ? 'pointer' : 'default', transition: 'all 0.18s var(--ease)',
             }}>
-            {submitting ? 'Posting…' : 'Post discussion'}
+            {submitting ? (isEdit ? 'Saving…' : 'Posting…') : (isEdit ? 'Save changes' : 'Post discussion')}
           </button>
         </div>
       </div>
