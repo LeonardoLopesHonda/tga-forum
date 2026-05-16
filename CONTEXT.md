@@ -26,6 +26,14 @@ A Comment whose parent is another Comment (not the Post directly). Structurally 
 ### Profile
 A user's identity within TGA. Stores `username` and an optional `bio` (short free-text self-description). All fields beyond username are optional — privacy is respected. Verified roles and badges are deferred until community feedback justifies them. Linked 1:1 to a Supabase Auth user via UUID.
 
+**Planned expansion (designed, not yet built):** `display_name` (max 50, falls back to `username` when null), `avatar_url` (max 500, http/https), `location` (max 100, free-form), `links` (array of http/https URLs, max 3 entries — no labels), and `interests` (M2M to the Interest table). `bio` stays as-is — no separate `about` field. See [[Interest]] for the curated/uncurated split.
+
+### Interest
+A topic a Profile self-identifies with. Many-to-many via `profile_interests`. The `interests` table mixes admin-curated seed entries with user-submitted write-ins, distinguished by an `is_curated` boolean. The profile edit UI offers curated interests as a picker plus an "Other" affordance that upserts a new uncurated row. No moderation gate on write-ins — admins can merge/promote later as a separate concern. The picker only lists curated entries to avoid surfacing the long tail; uncurated interests appear on the owning profile and in derived features (suggested follows, group seeding) but never in the global picker.
+
+### Follow
+An asymmetric, public link from one Profile (follower) to another (followee). Modelled as a `follows` table keyed `(follower_id, followee_id)`. Self-follow is disallowed. Follower and following counts and lists are visible to anyone — this is locked into the model and any future privacy mode would require migration + RLS. Follows do not require acceptance (no friendship/request flow). They are the foundation for a personalised "following feed" tab that does not yet exist.
+
 ### Community Feedback Loop
 The product development model: users request features, the author implements them, iterates with the community until satisfied. Features are community-driven, not roadmap-driven. Feature requests are made as Posts in a dedicated category — no separate Proposal entity.
 
