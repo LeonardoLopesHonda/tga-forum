@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import * as postsApi from '@/lib/api/posts';
 import type { Cursor, PostPublic } from '@/lib/api/posts';
 import toast from '@/lib/toast';
@@ -24,11 +25,13 @@ export default function PostFeed() {
   const [cursor, setCursor]           = useState<Cursor | null>(null);
   const [loading, setLoading]         = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const searchParams = useSearchParams();
+  const category     = searchParams.get('category');
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    postsApi.list()
+    postsApi.list({ category })
       .then(page => {
         if (cancelled) return;
         setPosts(page.items);
@@ -43,13 +46,13 @@ export default function PostFeed() {
         toast.error(e instanceof Error ? e.message : 'Could not load posts. The server may be waking up — try again in a moment.');
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [category]);
 
   const handleLoadMore = async () => {
     if (!cursor || loadingMore) return;
     setLoadingMore(true);
     try {
-      const page = await postsApi.list({ cursor });
+      const page = await postsApi.list({ cursor, category });
       setPosts(prev => [...prev, ...page.items]);
       setCursor(page.next_cursor);
     } catch (e: unknown) {

@@ -1,46 +1,43 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import * as posts from '@/lib/api/posts';
 import * as ai from '@/lib/api/ai';
+import * as categoriesApi from '@/lib/api/categories';
+import type { Category } from '@/lib/api/categories';
 import authStore, { useAuth } from '@/lib/auth-store';
 import toast from '@/lib/toast';
 import { useField, validators } from '@/lib/use-field';
-
-const TAGS = ['Engineering', 'Explore', 'Connect'] as const;
-type Tag = typeof TAGS[number];
-
-const TAG_COLORS: Record<Tag, { bg: string; border: string; text: string }> = {
-  Engineering: { bg: 'rgba(212,168,67,0.10)', border: 'rgba(212,168,67,0.25)', text: '#D4A843' },
-  Explore:     { bg: 'rgba(160,144,112,0.10)', border: 'rgba(160,144,112,0.22)', text: '#A09070' },
-  Connect:     { bg: 'rgba(180,130,80,0.10)', border: 'rgba(180,130,80,0.22)', text: '#C09060' },
-};
 
 type CreatePostClientProps = {
   postId?:        string;
   initialTitle?:  string;
   initialContent?: string;
+  initialCategoryId?: number | null;
 };
 
-export default function CreatePostClient({ postId, initialTitle, initialContent }: CreatePostClientProps = {}) {
+export default function CreatePostClient({ postId, initialTitle, initialContent, initialCategoryId }: CreatePostClientProps = {}) {
   const isEdit = !!postId;
   const { user, ready } = useAuth();
   const title   = useField(initialTitle   ?? '', validators.minLength(5, 'Title'));
   const content = useField(initialContent ?? '', validators.minLength(10, 'Content'));
-  const [tag, setTag]               = useState<Tag | ''>('');
+  const [cats, setCats]             = useState<Category[]>([]);
+  const [categoryId, setCategoryId] = useState<number | ''>(initialCategoryId ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [aiLoading, setAiLoading]   = useState(false);
   const [serverError, setServerError] = useState('');
   const [done, setDone]             = useState(false);
   const [suggestedTitle,   setSuggestedTitle]   = useState<string | null>(null);
   const [suggestedContent, setSuggestedContent] = useState<string | null>(null);
-  const router = useRouter();
+  const router       = useRouter();
+  const searchParams = useSearchParams();
 
-  const titleChanged   = title.value.trim()   !== (initialTitle   ?? '').trim();
-  const contentChanged = content.value.trim() !== (initialContent ?? '').trim();
-  const hasChanges     = !isEdit || titleChanged || contentChanged;
-  const canSubmit      = title.isValid && content.isValid && !submitting && hasChanges;
+  const titleChanged    = title.value.trim()   !== (initialTitle   ?? '').trim();
+  const contentChanged  = content.value.trim() !== (initialContent ?? '').trim();
+  const categoryChanged = categoryId !== (initialCategoryId ?? '');
+  const hasChanges      = !isEdit || titleChanged || contentChanged || categoryChanged;
+  const canSubmit       = title.isValid && content.isValid && categoryId !== '' && !submitting && hasChanges;
 
   useEffect(() => {
     if (!ready) return;
@@ -49,6 +46,19 @@ export default function CreatePostClient({ postId, initialTitle, initialContent 
       authStore.openModal();
     }
   }, [ready, user, router]);
+
+  useEffect(() => {
+    categoriesApi.list().then(list => {
+      setCats(list);
+      if (categoryId === '' && !isEdit) {
+        const prefillSlug = searchParams.get('category');
+        if (prefillSlug) {
+          const match = list.find(c => c.slug === prefillSlug);
+          if (match) setCategoryId(match.category_id);
+        }
+      }
+    }).catch(() => setCats([]));
+  }, [isEdit, searchParams, categoryId]);
 
   if (!ready || !user) return null;
 
@@ -74,7 +84,7 @@ export default function CreatePostClient({ postId, initialTitle, initialContent 
             padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'background 0.18s',
           }}>{isEdit ? 'Back to post' : 'Back to forum'}</button>
         {!isEdit && (
-          <button onClick={() => { title.reset(); content.reset(); setTag(''); setDone(false); setServerError(''); }} style={{
+          <button onClick={() => { title.reset(); content.reset(); setCategoryId(''); setDone(false); setServerError(''); }} style={{
             background: 'transparent', color: 'var(--cream-2)', border: '1px solid rgba(212,168,67,0.20)',
             borderRadius: 6, padding: '11px 24px', fontFamily: 'var(--font-body)', fontSize: 14, cursor: 'pointer',
           }}>Write another</button>
@@ -116,14 +126,13 @@ export default function CreatePostClient({ postId, initialTitle, initialContent 
     if (!canSubmit) return;
     setServerError(''); setSubmitting(true);
     try {
-      // tag is UI-only — backend has no tag field yet
       if (isEdit && postId) {
         const body: { title?: string; content?: string } = {};
         if (titleChanged)   body.title   = title.value.trim();
         if (contentChanged) body.content = content.value.trim();
         await posts.update(postId, body);
       } else {
-        await posts.create(title.value.trim(), content.value.trim());
+        await posts.create(title.value.trim(), content.value.trim(), categoryId as number);
       }
       setDone(true);
     } catch (e: unknown) {
@@ -156,24 +165,26 @@ export default function CreatePostClient({ postId, initialTitle, initialContent 
         {isEdit ? 'Update the title or content. Changes are saved as a single revision.' : `Posting as ${user.username || user.email}`}
       </p>
 
-      {/* Tag selector */}
+      {/* Category selector */}
       <div style={{ marginBottom: 28 }}>
-        <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 10, letterSpacing: '0.04em' }}>Topic (optional)</label>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {TAGS.map(t => {
-            const active = tag === t;
-            const c = TAG_COLORS[t];
-            return (
-              <button key={t} onClick={() => setTag(active ? '' : t)} style={{
-                background: active ? c.bg : 'transparent',
-                border: `1px solid ${active ? c.border : 'rgba(212,168,67,0.16)'}`,
-                borderRadius: 4, padding: '7px 18px', fontFamily: 'var(--font-body)', fontSize: 12,
-                letterSpacing: '0.08em', textTransform: 'uppercase',
-                color: active ? c.text : 'var(--cream-3)', cursor: 'pointer', transition: 'all 0.18s var(--ease)',
-              }}>{t}</button>
-            );
-          })}
-        </div>
+        <label style={{ fontSize: 12, color: 'var(--cream-2)', display: 'block', marginBottom: 10, letterSpacing: '0.04em' }}>Category</label>
+        <select
+          value={categoryId}
+          onChange={e => setCategoryId(e.target.value === '' ? '' : Number(e.target.value))}
+          disabled={isEdit}
+          style={{
+            width: '100%', background: 'var(--depth-1)',
+            border: '1px solid rgba(212,168,67,0.20)', borderRadius: 6,
+            padding: '12px 16px', fontFamily: 'var(--font-body)', fontSize: 14,
+            color: 'var(--cream)', outline: 'none', cursor: isEdit ? 'not-allowed' : 'pointer',
+            opacity: isEdit ? 0.6 : 1,
+          }}
+        >
+          <option value="">Choose a category…</option>
+          {cats.map(c => (
+            <option key={c.category_id} value={c.category_id}>{c.name}</option>
+          ))}
+        </select>
       </div>
 
       {/* Title */}

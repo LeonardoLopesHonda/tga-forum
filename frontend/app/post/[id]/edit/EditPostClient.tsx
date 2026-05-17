@@ -61,6 +61,7 @@ export default function EditPostClient({ postId }: { postId: string }) {
       postId={postId}
       initialTitle={post.title}
       initialContent={post.content}
+      initialCategoryId={post.category_id}
     />
   );
 }

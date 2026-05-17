@@ -7,6 +7,7 @@ import * as posts from '@/lib/api/posts';
 import type { PostPublic } from '@/lib/api/posts';
 import { useAuth } from '@/lib/auth-store';
 import Avatar, { deriveUser } from '@/app/components/Avatar';
+import CategoryBadge from '@/app/components/CategoryBadge';
 import Shimmer from '@/app/components/Shimmer';
 import CommentSection from './components/CommentSection';
 
@@ -99,6 +100,7 @@ export default function PostDetailClient({ postId }: { postId: string }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40, paddingBottom: 32, borderBottom: '1px solid rgba(212,168,67,0.10)' }}>
         <Avatar user={author} size={28} />
         <Link href={`/profile/${author?.username}`} style={{ fontSize: 14, color: 'var(--cream-2)', textDecoration: 'none' }}>{author?.username}</Link>
+        <CategoryBadge categoryId={post.category_id} size="md" />
       </div>
 
       <div style={{ marginBottom: 56 }}>{renderBody(post.content)}</div>

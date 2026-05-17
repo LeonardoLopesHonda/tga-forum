@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { PostPublic } from '@/lib/api/posts';
 import Avatar, { deriveUser } from './Avatar';
-import TagChip from './TagChip';
+import CategoryBadge from './CategoryBadge';
 
-type Props = { post: PostPublic & { tag?: string; time?: string }; commentCount?: number };
+type Props = { post: PostPublic & { time?: string }; commentCount?: number };
 
 export default function PostCard({ post, commentCount }: Props) {
   const [hovered, setHovered] = useState(false);
@@ -36,7 +36,8 @@ export default function PostCard({ post, commentCount }: Props) {
         }}>
           {post.title}
         </h2>
-        {post.tag && <TagChip tag={post.tag} />}
+        <CategoryBadge categoryId={post.category_id} />
+
       </div>
 
       <p style={{
