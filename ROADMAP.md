@@ -11,7 +11,6 @@ Status index for product features and infrastructure work. Authoritative source 
 
 | Feature           | Status        | Issue | Summary                                                                                       | Last touched |
 | ----------------- | ------------- | ----- | --------------------------------------------------------------------------------------------- | ------------ |
-| Categories        | in-progress   | #1    | 6 fixed admin-curated categories, slug URLs, DB-owned gradient palette (`color_from`/`_to`)   | 2026-05-16   |
 | Profile fields    | designed      | #9    | `display_name`, `avatar_url`, `location`, `links` (max 3, no labels)                          | 2026-05-15   |
 | Profile interests | designed      | #10   | M2M, curated seed + user write-ins distinguished by `is_curated`                              | 2026-05-15   |
 | Follows           | idea          | #11   | Asymmetric, public follow graph — foundation for a future personalised feed                   | 2026-05-15   |
@@ -34,8 +33,9 @@ Status index for product features and infrastructure work. Authoritative source 
 ## Shipped
 
 
-| Feature      | Issue | Summary                                                                  | Shipped    |
-| ------------ | ----- | ------------------------------------------------------------------------ | ---------- |
-| Edit post UI | #6    | `/post/[id]/edit` route + dual-mode `CreatePostClient` + Edit on detail. | 2026-05-15 |
+| Feature      | Issue | Summary                                                                                       | Shipped    |
+| ------------ | ----- | --------------------------------------------------------------------------------------------- | ---------- |
+| Categories   | #1    | 6 fixed admin-curated categories, slug URLs, DB-owned gradient palette (`color_from`/`_to`).  | 2026-05-16 |
+| Edit post UI | #6    | `/post/[id]/edit` route + dual-mode `CreatePostClient` + Edit on detail.                      | 2026-05-15 |
 
 
