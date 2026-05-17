@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import tuple_
 from sqlalchemy.orm import Session
 from models.post import PostCreate, PostUpdate
-from db.database import Post, PostWithUsername
+from db.database import Category, Post, PostWithUsername
 
 def get_post_by_id(db: Session, post_id: int):
     post = db.query(PostWithUsername).filter(PostWithUsername.post_id == post_id).first()
@@ -21,7 +21,8 @@ def create_post(db: Session, body: PostCreate, user_id: UUID):
     post = Post(
         title=body.title,
         content=body.content,
-        user_id=user_id
+        user_id=user_id,
+        category_id=body.category_id,
     )
     db.add(post)
     db.commit()
@@ -51,8 +52,14 @@ def _apply_cursor(query, before: datetime | None, before_id: int | None):
         PostWithUsername.post_id.desc(),
     )
 
-def list_posts_page(db: Session, limit: int, before: datetime | None, before_id: int | None):
-    query = _apply_cursor(db.query(PostWithUsername), before, before_id)
+def list_posts_page(db: Session, limit: int, before: datetime | None, before_id: int | None, category: str | None = None):
+    query = db.query(PostWithUsername)
+    if category is not None:
+        cat = db.query(Category).filter(Category.slug == category).first()
+        if cat is None:
+            return []
+        query = query.filter(PostWithUsername.category_id == cat.category_id)
+    query = _apply_cursor(query, before, before_id)
     return query.limit(limit + 1).all()
 
 def list_user_posts_page(db: Session, user_id: UUID, limit: int, before: datetime | None, before_id: int | None):

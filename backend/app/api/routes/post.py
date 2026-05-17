@@ -41,9 +41,10 @@ def get_all(
     limit: int = Query(10, ge=1, le=50),
     before: datetime | None = None,
     before_id: int | None = None,
+    category: str | None = None,
     db: Session = Depends(get_db),
 ) -> PostPage:
-    rows = list_posts_page(db, limit, before, before_id)
+    rows = list_posts_page(db, limit, before, before_id, category)
     has_more = len(rows) > limit
     items = rows[:limit] if has_more else rows
     next_cursor = (

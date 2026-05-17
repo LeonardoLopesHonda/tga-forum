@@ -17,6 +17,7 @@ class Post(Base):
     __tablename__ = "post"
 
     post_id: Mapped[int] = mapped_column(primary_key=True)
+    category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.category_id"), nullable=True)
     title: Mapped[str] = mapped_column(nullable=False)
     content: Mapped[str] = mapped_column(nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -58,6 +59,7 @@ class PostWithUsername(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
     username: Mapped[str] = mapped_column(nullable=False)
+    category_id: Mapped[int | None] = mapped_column(nullable=True)
 
 class CommentWithUsername(Base):
     __tablename__ = "comment_with_username"
@@ -71,6 +73,15 @@ class CommentWithUsername(Base):
     post_id: Mapped[int] = mapped_column(nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
     username: Mapped[str] = mapped_column(nullable=False)
+
+class Category(Base):
+    __tablename__ = "categories"
+
+    category_id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False)
+    color_from: Mapped[str] = mapped_column(nullable=False)
+    color_to: Mapped[str] = mapped_column(nullable=False)
 
 def create_tables():
     Base.metadata.create_all(engine)

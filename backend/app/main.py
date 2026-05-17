@@ -1,12 +1,13 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from core.config import settings
-from db.database import create_tables
+from api.routes.category import router as category_router
 from api.routes.comment import router as comment_router
+from fastapi.middleware.cors import CORSMiddleware
 from api.routes.auth import router as auth_router
 from api.routes.user import router as user_router
 from api.routes.post import router as post_router
 from api.routes.ai import router as ai_router
+from db.database import create_tables
+from core.config import settings
+from fastapi import FastAPI
 
 app = FastAPI()
 create_tables()
@@ -24,8 +25,9 @@ app.add_middleware(
 def root():
     return {"status": "online"}
 
+app.include_router(comment_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(user_router, prefix="/api/v1")
 app.include_router(post_router, prefix="/api/v1")
-app.include_router(comment_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
+app.include_router(category_router, prefix="/api/v1")

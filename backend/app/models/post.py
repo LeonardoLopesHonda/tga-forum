@@ -7,17 +7,20 @@ class PostBase(BaseModel):
     content: str
 
 class PostCreate(PostBase):
+    category_id: int
     pass
 
 class PostUpdate(BaseModel):
     title: str | None = None
     content: str | None = None
+    category_id: int | None = None
 
-class PostPublic(PostBase):
+class PostPublic(PostBase): 
     post_id: int
     user_id: UUID
+    category_id: int | None = None
     username: str
-    created_at: datetime
+    created_at: datetime 
     model_config = ConfigDict(from_attributes=True)
 
 class Cursor(BaseModel):
