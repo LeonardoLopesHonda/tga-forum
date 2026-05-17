@@ -51,20 +51,27 @@ A label that classifies a Post by topic or purpose. A Post belongs to exactly on
 5. News & Events — launches, discoveries, sky events
 6. Feature Requests — community-driven product feedback
 
-Each category has a stable `slug` (kebab-case, e.g. `stargazing-observing`) used in URLs and a hand-picked gradient stored as `color_from` / `color_to` hex columns. The DB is the single source of truth for palette — frontend composes the gradient (`linear-gradient(135deg, from, to)`) but does not own the colors. The list is fixed and admin-curated; `posts.category_id` is `NOT NULL` with `ON DELETE RESTRICT`. Pre-existing posts are backfilled to `General` rather than introducing an "Uncategorized" 7th category — `General` already is the catch-all. The seed runs idempotently on app boot (`INSERT ... ON CONFLICT (slug) DO NOTHING`).
+Each category has a stable `slug` (kebab-case, e.g. `stargazing-observing`) used in URLs and a hand-picked gradient stored as `color_from` / `color_to` hex columns. The DB is the single source of truth for palette — frontend composes the gradient (`linear-gradient(135deg, from, to)`) but does not own the colors. The list is fixed and admin-curated; `posts.category_id` is **nullable** with `ON DELETE RESTRICT`. New posts created via the API require a `category_id`; old posts (pre-Categories) may have null. The prod migration backfilled existing rows to `General`; local nuke-and-pave runs against an empty `post` table so the question doesn't arise.
+
+Seeding happens in the migration (`supabase/migrations/{local,prod}/0001_categories.sql`), not on app boot. The seed inserts 6 rows once; subsequent runs would error (the migration is run-once, not idempotent — see the `local/` vs `prod/` split below).
+
+**Category is immutable post-creation.** `PostUpdate` does not accept `category_id`; the create form's `<select>` is disabled in edit mode. If reassignment is ever wanted, it's an explicit decision to revisit.
 
 **API surface:**
-- `GET /api/v1/categories` returns the 6 rows for frontend pills + form selector. Cached module-level on the frontend with in-flight promise dedup (one fetch per page load).
-- `GET /api/v1/posts?category=<slug>` filters by slug (not id). Filter is applied as a WHERE clause before cursor pagination — cursor shape (`created_at, post_id`) is unchanged.
-- `POST /api/v1/posts` requires `category_id`. Service layer verifies the id exists and returns `400` with a clear message on miss; the DB FK is a backstop.
-- Post responses embed the full category object (`{id, slug, name, color_from, color_to}`) rather than just `category_id`, so cards render immediately without waiting on the categories fetch.
+- `GET /api/v1/categories` returns the 6 rows for frontend pills + form selector. Cached module-level on the frontend (one fetch per page load, plain promise cache — no in-flight dedup).
+- `GET /api/v1/posts?category=<slug>` filters by slug (not id). The service resolves slug → `category_id`; unknown slug returns an empty list. Filter composes with the existing cursor pagination — cursor shape (`created_at, post_id`) is unchanged.
+- `POST /api/v1/posts` requires `category_id` in the body. There is no service-layer existence check today — an invalid id raises `IntegrityError` from the FK and surfaces as a 500. The frontend `<select>` only offers valid ids, so the case is unreachable in practice. If we ever expose the API to less-trusted clients, add a pre-check that returns 400.
+- Post responses include `category_id` (integer) only — they do **not** embed the full category object. The frontend resolves the id against its cached categories list when rendering badges.
 
 **Frontend conventions:**
-- Feed filter: horizontal pill row above `PostFeed`. Selected category lives in the URL (`?category=<slug>`) — shareable, back-button friendly. Changing the filter resets cursor + post list.
-- Post card + post detail show a clickable gradient badge. Clicking from anywhere navigates to `/?category=<slug>` (global filtered feed). Profile pages render the badge but do not get a filter row — profile is identity, not taxonomy.
-- Create form uses a native `<select>` (not pills) — form input, not navigation. Accepts `?category=<slug>` query to pre-fill from empty-state CTAs.
-- Empty filtered feed renders a friendly message + "Be the first to post" CTA that deep-links to `/create?category=<slug>`.
-- New API slice: `lib/api/categories.ts` exposing `list()` and `Category` type, matching the per-domain slice convention.
+- Feed filter: horizontal pill row above `PostFeed` with an explicit "All" pill that clears the filter. Selected category lives in the URL (`?category=<slug>`) — shareable, back-button friendly. Changing the filter resets cursor + post list.
+- Post card + post detail show a clickable gradient badge. Clicking from anywhere navigates to `/?category=<slug>` (global filtered feed). Profile pages render the badge but do not get a filter row — profile is identity, not taxonomy. Posts with `category_id == null` render no badge.
+- Create form uses a native `<select>` (not pills) — form input, not navigation. Accepts `?category=<slug>` query to pre-fill from badge links.
+- New API slice: `lib/api/categories.ts` exposing `list()`, a `Category` type, and a `gradient(c)` helper that composes the CSS string.
+
+**Migration variants.** Schema changes that need both a dev-reset workflow and a live-data workflow live as two files:
+- `supabase/migrations/local/<n>_*.sql` — assumes `Base.metadata.create_all()` has just rebuilt the schema. Migration only does what `create_all` cannot: seed rows and replace view-shaped tables with real views.
+- `supabase/migrations/prod/<n>_*.sql` — assumes live data. Full `CREATE TABLE` + `ALTER TABLE` + backfill + view recreate. Run manually via Supabase Studio or `psql`. This is the path of least resistance until Alembic (#7) lands; the two files will collapse into one Alembic revision then.
 
 ### Email Confirmation Flow
 Supabase email confirmation is enabled. Signup does not produce a session immediately — the backend returns `202 Accepted` with `{ "pending_confirmation": true }`. The frontend modal transitions to a confirmation screen. When the user clicks the confirmation link, Supabase redirects to `/auth/callback` on the frontend, which exchanges the token for a session and calls `GET /users/me` to complete profile creation.
