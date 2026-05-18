@@ -69,9 +69,7 @@ Seeding happens in the migration (`supabase/migrations/{local,prod}/0001_categor
 - Create form uses a native `<select>` (not pills) — form input, not navigation. Accepts `?category=<slug>` query to pre-fill from badge links.
 - New API slice: `lib/api/categories.ts` exposing `list()`, a `Category` type, and a `gradient(c)` helper that composes the CSS string.
 
-**Migration variants.** Schema changes that need both a dev-reset workflow and a live-data workflow live as two files:
-- `supabase/migrations/local/<n>_*.sql` — assumes `Base.metadata.create_all()` has just rebuilt the schema. Migration only does what `create_all` cannot: seed rows and replace view-shaped tables with real views.
-- `supabase/migrations/prod/<n>_*.sql` — assumes live data. Full `CREATE TABLE` + `ALTER TABLE` + backfill + view recreate. Run manually via Supabase Studio or `psql`. This is the path of least resistance until Alembic (#7) lands; the two files will collapse into one Alembic revision then.
+**Migrations.** Managed by the Supabase CLI — see `supabase/migrations/README.md` for the workflow, conventions, and baseline record.
 
 ### Email Confirmation Flow
 Supabase email confirmation is enabled. Signup does not produce a session immediately — the backend returns `202 Accepted` with `{ "pending_confirmation": true }`. The frontend modal transitions to a confirmation screen. When the user clicks the confirmation link, Supabase redirects to `/auth/callback` on the frontend, which exchanges the token for a session and calls `GET /users/me` to complete profile creation.

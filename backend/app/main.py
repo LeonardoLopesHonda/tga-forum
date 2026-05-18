@@ -5,12 +5,10 @@ from api.routes.auth import router as auth_router
 from api.routes.user import router as user_router
 from api.routes.post import router as post_router
 from api.routes.ai import router as ai_router
-from db.database import create_tables
 from core.config import settings
 from fastapi import FastAPI
 
 app = FastAPI()
-create_tables()
 
 app.add_middleware(
     CORSMiddleware,
