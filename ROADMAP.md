@@ -26,7 +26,6 @@ Status index for product features and infrastructure work. Authoritative source 
 
 | Item                                    | Status | Issue | Summary                                                                                       | Last touched |
 | --------------------------------------- | ------ | ----- | --------------------------------------------------------------------------------------------- | ------------ |
-| Supabase migrations                     | in-progress | #7    | Single Supabase-CLI managed migration history; prod baselined via `migration repair`.    | 2026-05-18   |
 | Test fixture: `post_with_username` view | idea   | #8    | SQLite `create_all` builds the view's name as a regular empty table; tests can't exercise it. | 2026-05-15   |
 
 
@@ -35,7 +34,8 @@ Status index for product features and infrastructure work. Authoritative source 
 
 | Feature      | Issue | Summary                                                                                       | Shipped    |
 | ------------ | ----- | --------------------------------------------------------------------------------------------- | ---------- |
-| Categories   | #1    | 6 fixed admin-curated categories, slug URLs, DB-owned gradient palette (`color_from`/`_to`).  | 2026-05-16 |
-| Edit post UI | #6    | `/post/[id]/edit` route + dual-mode `CreatePostClient` + Edit on detail.                      | 2026-05-15 |
+| Categories          | #1    | 6 fixed admin-curated categories, slug URLs, DB-owned gradient palette (`color_from`/`_to`).  | 2026-05-16 |
+| Edit post UI        | #6    | `/post/[id]/edit` route + dual-mode `CreatePostClient` + Edit on detail.                      | 2026-05-15 |
+| Supabase migrations | #7    | Single Supabase-CLI managed migration history; prod baselined via `migration repair`.         | 2026-05-18 |
 
 
