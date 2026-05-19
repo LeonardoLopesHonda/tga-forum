@@ -1,16 +1,16 @@
-from datetime import datetime
-from sqlalchemy.exc import IntegrityError
-from services.profile import get_user_by_id, get_user_by_username, populate_profile, update_profile
-from models.user import UserPatch, UserPublic
-from fastapi import APIRouter, Depends, HTTPException, Query
-from services.comment import get_comments_by_user
+from services.profile import get_user_by_id, get_user_by_username, populate_profile, update_profile, _serialize
 from services.post import get_posts_by_user, list_user_posts_page
+from fastapi import APIRouter, Depends, HTTPException, Query
+from models.post import Cursor, PostPage, PostPublic
+from services.comment import get_comments_by_user
+from models.user import UserPatch, UserPublic
 from services.auth import get_current_user
+from sqlalchemy.exc import IntegrityError
 from models.comment import CommentPublic
 from sqlalchemy.orm import Session
 from models.token import TokenData
-from models.post import Cursor, PostPage, PostPublic
 from db.database import get_db
+from datetime import datetime
 
 router = APIRouter()
 
@@ -37,12 +37,12 @@ def get_me(current_user: TokenData = Depends(get_current_user), db: Session = De
         except IntegrityError:
             raise HTTPException(status_code=409, detail="username taken")
         user = get_user_by_id(current_user.user_id, db)
-    return {"user_id": user.id, "username": user.username, "bio": user.bio}
+    return _serialize(user)
 
 @router.get("/users/{username}", response_model=UserPublic)
 def get_user_profile(username: str, db: Session = Depends(get_db)):
     user = get_user_by_username(username, db)
-    return {"user_id": user.id, "username": user.username, "bio": user.bio}
+    return _serialize(user)
 
 @router.get("/users/{username}/posts", response_model=PostPage)
 def get_user_profile_posts(

@@ -31,8 +31,21 @@ def get_user_by_username(username: str, db: Session) -> Profile:
 
 def update_profile(user: Profile, body: UserPatch, db: Session):
     data = body.model_dump(exclude_unset=True)
+    if "avatar_url" in data and data["avatar_url"] is not None:
+        data["avatar_url"] = str(data["avatar_url"])
     for field, value in data.items():
         setattr(user, field, value)
     db.commit()
     db.refresh(user)
-    return {"user_id": user.id, "username": user.username, "bio": user.bio}
+    return _serialize(user)
+
+def _serialize(user: Profile) -> dict:
+    return {
+        "user_id": user.id,
+        "username": user.username,
+        "bio": user.bio,
+        "display_name": user.display_name or user.username,
+        "avatar_url": user.avatar_url,
+        "location": user.location,
+        "links": user.links,
+    }

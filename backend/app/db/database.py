@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column, sessionmaker
-from sqlalchemy import DateTime, ForeignKey, func, String
+from sqlalchemy import DateTime, ForeignKey, func, String, ARRAY
 from sqlalchemy.dialects.postgresql import UUID
 from core.config import settings
 from sqlalchemy import create_engine
@@ -47,6 +47,10 @@ class Profile(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     username: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
     bio: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    display_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    location: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    links: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
 
 class PostWithUsername(Base):
     __tablename__ = "post_with_username"

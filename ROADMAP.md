@@ -11,8 +11,8 @@ Status index for product features and infrastructure work. Authoritative source 
 
 | Feature           | Status        | Issue | Summary                                                                                       | Last touched |
 | ----------------- | ------------- | ----- | --------------------------------------------------------------------------------------------- | ------------ |
-| Profile fields    | designed      | #9    | `display_name`, `avatar_url`, `location`, `links` (max 3, no labels)                          | 2026-05-15   |
-| Profile interests | designed      | #10   | M2M, curated seed + user write-ins distinguished by `is_curated`                              | 2026-05-15   |
+| Profile fields    | in-progress   | #9    | `display_name`, `avatar_url`, `location`, `links` (max 3, no labels). Backend + bucket done; frontend pending. | 2026-05-19   |
+| Profile interests | designed      | #10   | M2M, curated seed + user write-ins distinguished by `is_curated`. Own API surface; follows #9.    | 2026-05-18   |
 | Follows           | idea          | #11   | Asymmetric, public follow graph — foundation for a future personalised feed                   | 2026-05-15   |
 | Groups            | idea (parked) | —     | Communities with shared feed. Scope deliberately undefined — revisit after Follows ships.     | 2026-05-15   |
 | Group chat        | idea (parked) | —     | Realtime, group-scoped messaging. Scope undefined.                                            | 2026-05-15   |
